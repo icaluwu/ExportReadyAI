@@ -23,7 +23,7 @@ Proyek ini dikembangkan dengan bantuan **Artificial Intelligence (AI) sebesar ±
 4. **Export Readiness Score**: Metrik objektif untuk mengukur kelayakan ekspor.
 
 ## 🛡️ Hak Milik & Lisensi
-Proyek ini merupakan hak milik penuh dari **Rizdi** (USER). Dilisensikan di bawah [MIT License](LICENSE).
+Proyek ini merupakan hak milik penuh dari **Teuku Vaickal Rizki Irdian** (USER). Dilisensikan di bawah [MIT License](LICENSE).
 
 ---
-*Dibuat dengan ❤️ untuk UMKM Indonesia.*
+*Dibuat untuk UMKM Indonesia dan Hackathon Digdaya 2026.*
