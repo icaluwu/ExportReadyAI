@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ExportReady AI 🚀
 
-## Getting Started
+Platform bertenaga AI untuk membantu UMKM Indonesia menilai kesiapan ekspor dan mendapatkan rekomendasi pasar global secara instan.
 
-First, run the development server:
+## 📝 Deskripsi Proyek
+ExportReady AI dirancang sebagai asisten digital bagi pelaku usaha kecil dan menengah (UMKM) yang ingin go-global. Dengan menjawab beberapa pertanyaan strategis, AI akan memberikan skor kesiapan dan roadmap langkah demi langkah.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🤖 Atribusi AI
+Proyek ini dikembangkan dengan bantuan **Artificial Intelligence (AI) sebesar ±50%** dalam proses koding, desain, dan penyusunan konten. Dikembangkan di bawah panduan teknis tahun 2026.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Stack Teknologi
+- **Framework**: Next.js 16 (App Router)
+- **Bahasa**: TypeScript
+- **Styling**: Tailwind CSS & shadcn/ui
+- **Database**: Supabase (PostgreSQL)
+- **AI Engine**: Google Gemini API (gemini-3-flash-preview)
+- **Komponen**: Framer Motion & Recharts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 💡 Manfaat & Kegunaan
+1. **Self-Assessment**: Mengetahui kelemahan dan kekuatan produk untuk pasar ekspor.
+2. **Market Intelligence**: Rekomendasi 3 negara terbaik berdasarkan profil produk.
+3. **Step-by-Step Roadmap**: Panduan persiapan dari bulan ke-0 hingga scale-up.
+4. **Export Readiness Score**: Metrik objektif untuk mengukur kelayakan ekspor.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛡️ Hak Milik & Lisensi
+Proyek ini merupakan hak milik penuh dari **Rizdi** (USER). Dilisensikan di bawah [MIT License](LICENSE).
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Dibuat dengan ❤️ untuk UMKM Indonesia.*
