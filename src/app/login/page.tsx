@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -29,8 +30,17 @@ const formSchema = z.object({
 });
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,6 +49,13 @@ export default function LoginPage() {
       password: '',
     },
   });
+
+  useEffect(() => {
+    const callbackError = searchParams.get('error');
+    if (callbackError) {
+      toast.error('Gagal login. Silakan coba lagi.');
+    }
+  }, [searchParams]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
@@ -59,20 +76,17 @@ export default function LoginPage() {
 
   return (
     <div className="container relative min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full -z-10 opacity-30 blur-3xl">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/20 rounded-full animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full animate-pulse delay-1000" />
-      </div>
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/8 rounded-full blur-3xl -z-10" />
+      <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl -z-10" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <Card className="border-none shadow-2xl glass bg-white/70 backdrop-blur-xl">
-          <CardHeader className="space-y-1 text-center pb-8 border-b bg-slate-50/50">
-            <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">Selamat Datang Kembali</CardTitle>
+        <Card className="border border-white/70 shadow-[0_28px_60px_-38px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem]">
+          <CardHeader className="space-y-1 text-center pb-8 border-b border-white/60 bg-white/40">
+            <CardTitle className="text-2xl font-black tracking-tight text-slate-900">Selamat Datang Kembali</CardTitle>
             <CardDescription>Masuk ke akun ExportReady AI Anda</CardDescription>
           </CardHeader>
           <CardContent className="pt-8 px-8">
@@ -89,7 +103,7 @@ export default function LoginPage() {
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                           <Input 
                             placeholder="nama@email.com" 
-                            className="pl-10 h-11 bg-white/50 border-slate-200 focus:border-primary transition-all shadow-sm"
+                            className="pl-10 h-11 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm"
                             {...field} 
                           />
                         </div>
@@ -105,7 +119,7 @@ export default function LoginPage() {
                     <FormItem>
                       <div className="flex items-center justify-between">
                         <FormLabel>Password</FormLabel>
-                        <Link href="#" className="text-xs font-medium text-primary hover:underline underline-offset-4">
+                        <Link href="/forgot-password" className="text-xs font-bold text-primary hover:underline underline-offset-4">
                           Lupa password?
                         </Link>
                       </div>
@@ -114,7 +128,7 @@ export default function LoginPage() {
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                           <Input 
                             type="password" 
-                            className="pl-10 h-11 bg-white/50 border-slate-200 focus:border-primary transition-all shadow-sm"
+                            className="pl-10 h-11 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm"
                             {...field} 
                           />
                         </div>
@@ -125,7 +139,7 @@ export default function LoginPage() {
                 />
                 <Button 
                   type="submit" 
-                  className="w-full h-11 font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-all active:scale-[0.98]" 
+                  className="w-full h-11 font-black shadow-lg shadow-primary/15 bg-primary hover:bg-primary/95 transition-all active:scale-[0.98]" 
                   disabled={loading}
                 >
                   {loading ? (
@@ -139,7 +153,7 @@ export default function LoginPage() {
             
             <div className="mt-8 pt-6 border-t text-center text-sm text-slate-500">
               Belum punya akun?{' '}
-              <Link href="/register" className="font-semibold text-primary hover:underline underline-offset-4">
+              <Link href="/register" className="font-black text-primary hover:underline underline-offset-4">
                 Daftar Sekarang
               </Link>
             </div>
