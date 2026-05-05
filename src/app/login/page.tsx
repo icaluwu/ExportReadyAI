@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { getSiteUrl } from '@/lib/site-url';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ export default function LoginPage() {
 
 function LoginInner() {
   const [loading, setLoading] = useState(false);
+  const [emailForResend, setEmailForResend] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -59,6 +61,7 @@ function LoginInner() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
+    setEmailForResend(values.email);
     const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
@@ -72,6 +75,25 @@ function LoginInner() {
       router.push('/dashboard');
       router.refresh();
     }
+  }
+
+  async function resendVerification() {
+    if (!emailForResend) {
+      toast.error('Masukkan email Anda dulu.')
+      return
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: emailForResend,
+      options: { emailRedirectTo: `${getSiteUrl()}/auth/callback` },
+    })
+
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+    toast.success('Email verifikasi sudah dikirim ulang. Cek inbox/spam.')
   }
 
   return (
@@ -147,6 +169,16 @@ function LoginInner() {
                   ) : (
                     <>Masuk <ArrowRight className="ml-2 h-4 w-4" /></>
                   )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resendVerification}
+                  className="w-full h-11 font-black border-2 bg-white/60 hover:bg-white"
+                  disabled={loading}
+                >
+                  Kirim Ulang Email Verifikasi
                 </Button>
               </form>
             </Form>

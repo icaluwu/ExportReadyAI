@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { getSiteUrl } from '@/lib/site-url';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +32,7 @@ const formSchema = z.object({
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
+  const [lastEmail, setLastEmail] = useState<string>('');
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,6 +46,7 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
+    setLastEmail(values.email);
     const { error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -51,7 +54,7 @@ export default function RegisterPage() {
         data: {
           full_name: values.fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
       },
     });
 
@@ -59,9 +62,29 @@ export default function RegisterPage() {
       toast.error(error.message);
       setLoading(false);
     } else {
-      toast.success('Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi atau langsung login.');
+      toast.success('Pendaftaran diproses. Silakan cek email Anda (inbox/spam) untuk verifikasi.');
       router.push('/login');
     }
+  }
+
+  async function resendVerification() {
+    if (!lastEmail) {
+      toast.error('Isi email terlebih dulu, lalu klik Daftar.')
+      return
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: lastEmail,
+      options: { emailRedirectTo: `${getSiteUrl()}/auth/callback` },
+    })
+
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+
+    toast.success('Email verifikasi sudah dikirim ulang. Cek inbox/spam.')
   }
 
   return (
@@ -153,6 +176,16 @@ export default function RegisterPage() {
                   ) : (
                     <>Daftar Sekarang <ArrowRight className="ml-2 h-4 w-4" /></>
                   )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resendVerification}
+                  className="w-full h-11 font-black border-2 bg-white/60 hover:bg-white"
+                  disabled={loading}
+                >
+                  Kirim Ulang Email Verifikasi
                 </Button>
               </form>
             </Form>
