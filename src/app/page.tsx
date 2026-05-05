@@ -7,31 +7,30 @@ import {
   BarChart3, 
   Globe2, 
   Map, 
-  ChevronRight, 
   ArrowRight,
-  TrendingUp,
-  Award,
   Zap,
-  CheckCircle2
+  ShieldCheck,
+  Users,
+  Landmark
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function LandingPage() {
   const features = [
     {
-      title: "Export Readiness Checker",
-      description: "Analisis komprehensif kapasitas bisnis, sertifikasi, dan daya saing produk Anda.",
+      title: "Export Readiness Score (0-100)",
+      description: "Skor otomatis lengkap dengan analisis gap yang perlu diperbaiki—langsung jelas apa yang harus dibenahi.",
       icon: <BarChart3 className="h-10 w-10 text-primary" />,
     },
     {
-      title: "Market Recommendation",
-      description: "Dapatkan rekomendasi 3 negara tujuan ekspor terbaik berdasarkan profil produk Anda.",
-      icon: <Globe2 className="h-10 w-10 text-accent" />,
+      title: "3 Negara Tujuan Terbaik",
+      description: "Rekomendasi negara yang relevan untuk produk Anda, beserta ringkasan demand dan regulasi masuk.",
+      icon: <Globe2 className="h-10 w-10 text-emerald-600" />,
     },
     {
-      title: "Export Roadmap",
-      description: "Panduan langkah demi langkah fase persiapan hingga scale-up pasar global.",
-      icon: <Map className="h-10 w-10 text-emerald-500" />,
+      title: "Roadmap 4 Fase (Bahasa Indonesia)",
+      description: "Panduan langkah demi langkah yang bisa langsung dieksekusi tanpa konsultan berbayar.",
+      icon: <Map className="h-10 w-10 text-amber-600" />,
     },
   ];
 
@@ -54,42 +53,54 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50/50">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-20 md:pt-40 md:pb-32">
-        {/* Animated Background Blobs */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -z-10 animate-pulse delay-1000" />
-        
+      <section className="relative overflow-hidden pt-20 pb-14 md:pt-28 md:pb-20">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -bottom-28 -right-24 h-72 w-72 rounded-full bg-accent/12 blur-3xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(1200px_500px_at_50%_-20%,rgba(27,58,107,0.12),transparent)]" />
+        </div>
+
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="max-w-4xl mx-auto"
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 text-xs font-bold tracking-widest text-primary uppercase bg-white shadow-sm border border-slate-100 rounded-full">
-              <Zap className="h-3 w-3 fill-primary" /> AI-Powered Export Intelligence
+            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-xs font-black tracking-widest text-primary uppercase bg-white/70 border border-white/50 rounded-full shadow-sm">
+              <Zap className="h-3.5 w-3.5" /> Konsultan Ekspor Virtual 24/7
             </span>
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight text-slate-900 mb-8 leading-[1.1]">
-              Bawa Produk Lokal ke <span className="text-gradient">Pasar Global</span>
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 mb-5 leading-[1.15]">
+              Bantu UMKM Anda Siap Ekspor{" "}
+              <span className="text-gradient">Kurang dari 30 Menit</span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-500 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-              Analisis kesiapan ekspor UMKM Indonesia dalam hitungan detik dengan bantuan AI tercanggih.
+            <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl mx-auto font-medium">
+              Dapatkan <span className="font-black text-slate-900">skor kesiapan</span>,{" "}
+              <span className="font-black text-slate-900">3 negara tujuan</span>, dan{" "}
+              <span className="font-black text-slate-900">roadmap 4 fase</span>—gratis, kapan pun Anda butuh.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link 
                 href="/assessment" 
-                className={buttonVariants({ size: "lg", className: "h-16 px-12 text-xl font-bold shadow-2xl shadow-primary/30 bg-primary hover:scale-105 transition-transform" })}
+                className={buttonVariants({ size: "lg", className: "h-14 px-10 text-lg font-black shadow-lg shadow-primary/15 bg-primary hover:bg-primary/95" })}
               >
-                Mulai Analisis <ArrowRight className="ml-3 h-6 w-6" />
+                Mulai Analisis Gratis <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link 
                 href="/dashboard" 
-                className={buttonVariants({ size: "lg", variant: "outline", className: "h-16 px-10 text-lg font-bold border-2 hover:bg-white/50 backdrop-blur-sm" })}
+                className={buttonVariants({ size: "lg", variant: "outline", className: "h-14 px-8 text-base font-black border-2 bg-white/50 hover:bg-white" })}
               >
-                Lihat Contoh
+                Lihat Dashboard
               </Link>
+            </div>
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-slate-500">
+              <span className="rounded-full border border-slate-200 bg-white/60 px-3 py-1">Gratis</span>
+              <span className="rounded-full border border-slate-200 bg-white/60 px-3 py-1">Bahasa Indonesia</span>
+              <span className="rounded-full border border-slate-200 bg-white/60 px-3 py-1">Cocok UMKM 1–5 orang</span>
+              <span className="rounded-full border border-slate-200 bg-white/60 px-3 py-1">Akses 24/7</span>
             </div>
           </motion.div>
         </div>
@@ -110,7 +121,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="p-8 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 text-center"
+                className="p-8 rounded-3xl bg-white/70 border border-white/50 shadow-[0_20px_40px_-25px_rgba(15,23,42,0.25)] text-center"
               >
                 <div className="text-5xl font-black text-primary mb-2 leading-none">{stat.value}</div>
                 <p className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-1">{stat.label}</p>
@@ -122,7 +133,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-32">
+      <section id="features" className="py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">Fitur Unggulan</h2>
@@ -139,14 +150,14 @@ export default function LandingPage() {
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="h-full border-none shadow-xl glass hover:shadow-2xl transition-all duration-500 overflow-hidden group">
-                  <div className="h-2 w-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Card className="h-full border border-white/60 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] bg-white/70 hover:bg-white/80 transition-colors overflow-hidden group rounded-3xl">
+                  <div className="h-1.5 w-full bg-primary/80" />
                   <CardContent className="pt-10 pb-12 px-8">
-                    <div className="mb-8 inline-flex p-4 rounded-3xl bg-white shadow-lg border border-slate-50 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                    <div className="mb-7 inline-flex p-4 rounded-3xl bg-white shadow-sm border border-slate-100 transition-transform duration-300 group-hover:scale-[1.03]">
                       {feature.icon}
                     </div>
                     <h3 className="text-2xl font-bold mb-4 text-slate-900">{feature.title}</h3>
-                    <p className="text-slate-500 leading-relaxed font-medium">
+                    <p className="text-slate-600 leading-relaxed font-medium">
                       {feature.description}
                     </p>
                   </CardContent>
@@ -158,16 +169,13 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-32 bg-slate-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none -z-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary rounded-full blur-[150px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600 rounded-full blur-[150px]" />
-        </div>
-        
+      <section id="how-it-works" className="py-24 overflow-hidden relative">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(1200px_400px_at_50%_0%,rgba(245,158,11,0.14),transparent)]" />
+
         <div className="container mx-auto px-4 relative z-10 text-center">
           <div className="mb-20">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">Hanya 3 Langkah Mudah</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto text-lg font-medium">
+            <h2 className="text-4xl md:text-5xl font-black mb-6 text-slate-900">Hanya 3 Langkah Mudah</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto text-lg font-medium">
               Sederhanakan kerumitan ekspor dengan bantuan asisten AI cerdas kami.
             </p>
           </div>
@@ -175,11 +183,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             {steps.map((step, index) => (
               <div key={index} className="flex flex-col items-center group">
-                <div className="w-20 h-20 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center text-3xl font-black mb-8 group-hover:bg-primary group-hover:scale-110 transition-all duration-500 shadow-2xl">
+                <div className="w-20 h-20 rounded-3xl bg-white/70 border border-white/60 flex items-center justify-center text-3xl font-black mb-8 group-hover:bg-primary group-hover:text-white group-hover:scale-105 transition-all duration-300 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
                   {step.number}
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
-                <p className="text-slate-400 font-medium leading-relaxed">
+                <h3 className="text-2xl font-bold mb-4 text-slate-900">{step.title}</h3>
+                <p className="text-slate-600 font-medium leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -188,34 +196,76 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-32 relative flex items-center justify-center">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <Card className="border-none shadow-[0_50px_100px_-20px_rgba(27,58,107,0.3)] bg-slate-900 text-white p-12 md:p-20 relative overflow-hidden text-center rounded-[3rem] group">
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[100px] -mr-48 -mt-48 transition-transform group-hover:scale-110 duration-700" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] -ml-48 -mb-48 transition-transform group-hover:scale-110 duration-700" />
-            
-            <div className="relative z-10 max-w-3xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
-                <h2 className="text-4xl md:text-6xl font-black mb-8 leading-[1.1] tracking-tight italic">
-                  Saatnya Produk Anda <span className="text-primary italic">Menyapa Dunia</span>
-                </h2>
-                <p className="text-xl text-slate-400 mb-12 font-medium leading-relaxed">
-                  Dapatkan assessment gratis dan roadmap ekspor personal hari ini juga. Tidak ada biaya, hanya peluang besar menanti Anda.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                  <Button size="lg" className="bg-primary text-white hover:bg-primary/90 h-16 px-12 font-black text-xl rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-105" asChild>
-                    <Link href="/assessment">Cek Kesiapan Gratis</Link>
-                  </Button>
-                  <Link href="/register" className="text-white font-bold hover:text-primary transition-colors flex items-center gap-2 group/link">
-                    Daftar Member UMKM <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
-                  </Link>
+      {/* For who */}
+      <section className="py-24">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-3">Untuk Siapa ExportReady AI?</h2>
+            <p className="text-slate-600 font-medium max-w-2xl mx-auto">
+              Dua lapisan pengguna—pelaku UMKM dan lembaga pendukung ekspor—dengan kebutuhan yang sama: informasi ekspor yang cepat dan jelas.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="rounded-3xl border border-white/70 bg-white/70 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
+              <CardContent className="p-8">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 mb-2">UMKM Mikro–Menengah</h3>
+                    <p className="text-slate-600 font-medium leading-relaxed">
+                      Cocok untuk tim kecil (1–5 orang) yang ingin ekspor tapi terkendala biaya konsultasi dan kebingungan dokumen.
+                    </p>
+                  </div>
                 </div>
-              </motion.div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-3xl border border-white/70 bg-white/70 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
+              <CardContent className="p-8">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-2xl bg-amber-500/15 p-3 text-amber-700">
+                    <Landmark className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 mb-2">Lembaga Pendukung Ekspor</h3>
+                    <p className="text-slate-600 font-medium leading-relaxed">
+                      Untuk dinas/asosiasi/LPEI yang kewalahan konsultasi manual—ExportReady membantu standarisasi screening awal.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="pb-24">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <Card className="border border-white/60 bg-white/70 shadow-[0_28px_60px_-38px_rgba(15,23,42,0.55)] p-10 md:p-14 relative overflow-hidden text-center rounded-[2.5rem]">
+            <div className="absolute -z-10 -top-20 -right-20 h-64 w-64 bg-primary/10 rounded-full blur-3xl" />
+            <div className="absolute -z-10 -bottom-24 -left-20 h-72 w-72 bg-accent/12 rounded-full blur-3xl" />
+
+            <div className="max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-xs font-black tracking-widest text-slate-700 uppercase bg-white/70 rounded-full border border-white/60">
+                <ShieldCheck className="h-4 w-4 text-primary" /> Gratis • 24/7 • Bahasa Indonesia
+              </div>
+              <h2 className="text-3xl md:text-5xl font-black mb-4 leading-[1.12] tracking-tight text-slate-900">
+                Mulai dari skor kesiapan, lalu eksekusi roadmap.
+              </h2>
+              <p className="text-lg text-slate-600 mb-8 font-medium leading-relaxed">
+                Isi profil produk Anda sekali, lalu dapatkan laporan yang bisa langsung dipraktikkan.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button size="lg" className="bg-primary text-white hover:bg-primary/95 h-14 px-10 font-black rounded-2xl shadow-lg shadow-primary/15" asChild>
+                  <Link href="/assessment">Cek Kesiapan Gratis</Link>
+                </Button>
+                <Link href="/register" className={buttonVariants({ variant: "outline", size: "lg", className: "h-14 px-8 font-black rounded-2xl border-2 bg-white/60 hover:bg-white" })}>
+                  Buat Akun (opsional)
+                </Link>
+              </div>
             </div>
           </Card>
         </div>

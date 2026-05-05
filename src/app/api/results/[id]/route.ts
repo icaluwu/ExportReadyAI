@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 export async function GET(
   req: NextRequest,
@@ -12,14 +11,24 @@ export async function GET(
       return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 });
     }
 
-    const { data, error } = await supabase
-      .from('assessments')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { createClient: createServerClient } = await import('@/lib/supabase-server');
+    const supabaseServer = await createServerClient();
+    const { data: { user } } = await supabaseServer.auth.getUser();
+
+    // If user is logged in, only allow access to their own assessments.
+    // If user is logged out, only allow access to guest assessments (user_id is null).
+    let query = supabaseServer.from('assessments').select('*').eq('id', id);
+    if (user?.id) {
+      query = query.eq('user_id', user.id);
+    } else {
+      query = query.is('user_id', null);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
-      throw error;
+      // If the row doesn't match filters, treat as not found (avoid leaking existence).
+      return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
     }
 
     if (!data) {

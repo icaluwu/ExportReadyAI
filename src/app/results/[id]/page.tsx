@@ -143,21 +143,21 @@ export default function ResultsPage() {
   return (
     <div className="container relative mx-auto px-4 py-12 max-w-6xl min-h-screen">
       {/* Background accents */}
-      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
-      <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/8 rounded-full blur-3xl -z-10" />
+      <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl -z-10" />
 
       {/* Header - Non-printable */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
         <div>
-          <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs mb-3 bg-primary/5 w-fit px-3 py-1 rounded-full border border-primary/10">
+          <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs mb-3 bg-white/60 w-fit px-3 py-1.5 rounded-full border border-white/60 shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
             </span>
             Hasil Analisis AI Berhasil
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-1 tracking-tight italic">Export Report</h1>
-          <p className="text-lg text-slate-500 font-medium italic">Strategi masuk pasar untuk <span className="text-primary font-bold not-italic underline decoration-2 underline-offset-4">{data.product_name}</span></p>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-1 tracking-tight">Laporan Kesiapan Ekspor</h1>
+          <p className="text-lg text-slate-600 font-medium">Strategi masuk pasar untuk <span className="text-primary font-bold underline decoration-2 underline-offset-4">{data.product_name}</span></p>
         </div>
         <div className="flex items-center gap-4">
           <PDFExporter 
@@ -175,7 +175,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Main Report Content - Printable */}
-      <div ref={reportRef} className={`space-y-12 bg-white/40 p-2 md:p-6 rounded-[3rem] transition-all pdf-report ${isExporting ? 'exporting-mode' : ''}`}>
+      <div ref={reportRef} className={`space-y-12 bg-white/60 p-2 md:p-6 rounded-[2.5rem] transition-all pdf-report ${isExporting ? 'exporting-mode' : ''}`}>
         {/* Logo/Header for PDF Only */}
         <div id="pdf-header" className="hidden flex items-center justify-between mb-12 border-b-2 border-slate-100 pb-8">
           <div className="flex items-center gap-4">

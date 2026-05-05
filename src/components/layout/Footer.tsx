@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export function Footer() {
   return (
-    <footer className="border-t bg-slate-50 py-12">
+    <footer className="border-t bg-white/60 py-12">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="col-span-1 md:col-span-2">
@@ -26,6 +26,7 @@ export function Footer() {
               <li><Link href="/assessment" className="hover:text-primary transition-colors">Cek Kesiapan Ekspor</Link></li>
               <li><Link href="/#features" className="hover:text-primary transition-colors">Fitur Utama</Link></li>
               <li><Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard Riwayat</Link></li>
+              <li><Link href="/materi-belajar" className="hover:text-primary transition-colors">Materi Belajar</Link></li>
             </ul>
           </div>
           <div>
@@ -39,8 +40,8 @@ export function Footer() {
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
           <p>© 2024 ExportReady AI. Hak Cipta Dilindungi.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-primary">Kebijakan Privasi</Link>
-            <Link href="#" className="hover:text-primary">Syarat & Ketentuan</Link>
+            <Link href="/kebijakan-privasi" className="hover:text-primary">Kebijakan Privasi</Link>
+            <Link href="/syarat-ketentuan" className="hover:text-primary">Syarat & Ketentuan</Link>
           </div>
         </div>
       </div>

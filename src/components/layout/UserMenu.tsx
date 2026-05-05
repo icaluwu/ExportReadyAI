@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { 
   User, 
   LogOut, 
-  History, 
   Settings, 
   ChevronDown,
   LayoutDashboard
@@ -61,11 +60,11 @@ export function UserMenu() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button variant="ghost" asChild className="hidden sm:inline-flex">
+        <Button variant="ghost" asChild className="hidden sm:inline-flex font-semibold">
           <Link href="/login">Masuk</Link>
         </Button>
-        <Button asChild className="bg-primary hover:bg-primary/90 shadow-md shadow-primary/10">
-          <Link href="/register">Daftar</Link>
+        <Button asChild className="bg-primary hover:bg-primary/90 shadow-md shadow-primary/10 font-semibold">
+          <Link href="/register">Daftar Gratis</Link>
         </Button>
       </div>
     );
@@ -77,7 +76,7 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost" }), "relative h-10 w-auto flex items-center gap-2 pl-2 pr-1 rounded-full hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200")}>
+      <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost" }), "relative h-10 w-auto flex items-center gap-2 pl-2 pr-1.5 rounded-full hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200")}>
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-xs font-bold ring-2 ring-white shadow-sm">
           {initials}
         </div>
@@ -85,11 +84,11 @@ export function UserMenu() {
           <p className="text-xs font-bold text-slate-900 leading-tight truncate max-w-[100px]">
             {user.user_metadata?.full_name || 'User'}
           </p>
-          <p className="text-[10px] text-slate-500 leading-tight">UMKM Member</p>
+          <p className="text-[10px] text-slate-500 leading-tight">Akun UMKM</p>
         </div>
         <ChevronDown className="h-4 w-4 text-slate-400 mr-1" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mt-2 p-2 border-none shadow-2xl glass rounded-2xl" align="end">
+      <DropdownMenuContent className="w-56 mt-2 p-2 border border-slate-100 shadow-2xl glass rounded-2xl" align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal p-2">
             <div className="flex flex-col space-y-1">

@@ -215,31 +215,31 @@ export default function AssessmentPage() {
   }
 
   return (
-    <div className="container relative mx-auto px-4 py-12 max-w-4xl min-h-screen">
-      {/* Decorative Blobs */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-[100px] -z-10" />
+    <div className="container relative mx-auto px-4 py-10 max-w-4xl min-h-screen">
+      {/* Soft background accents */}
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/8 rounded-full blur-3xl -z-10" />
+      <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl -z-10" />
 
-      <div className="mb-12 text-center">
+      <div className="mb-10 text-center">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Kesiapan Ekspor UMKM</h1>
-          <p className="text-lg text-slate-500 font-medium">Lengkapi 4 langkah sederhana untuk membuka peluang pasar dunia.</p>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">Cek Kesiapan Ekspor</h1>
+          <p className="text-base md:text-lg text-slate-600 font-medium">Lengkapi 4 langkah sederhana untuk membuka peluang pasar dunia.</p>
         </motion.div>
       </div>
 
-      <div className="mb-12 max-w-2xl mx-auto">
+      <div className="mb-10 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-4 px-2">
           <span className="text-sm font-bold text-primary uppercase tracking-widest">Langkah {step} / 4</span>
           <span className="text-sm font-bold text-slate-400 capitalize">{Math.round((step / 4) * 100)}% Selesai</span>
         </div>
-        <div className="relative h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
+        <div className="relative h-3 w-full bg-white/70 rounded-full overflow-hidden shadow-inner border border-white/60">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${(step / 4) * 100}%` }}
-            className="absolute top-0 left-0 h-full bg-primary shadow-[0_0_10px_rgba(27,58,107,0.3)]"
+            className="absolute top-0 left-0 h-full bg-primary shadow-[0_0_10px_rgba(27,58,107,0.25)]"
           />
         </div>
         <div className="flex justify-between px-2 pt-4">
@@ -268,7 +268,7 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border-none shadow-2xl glass rounded-[2.5rem] overflow-visible">
+                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
@@ -288,7 +288,7 @@ export default function AssessmentPage() {
                         <FormItem>
                           <FormLabel className="font-bold text-slate-700">Nama Produk</FormLabel>
                           <FormControl>
-                            <Input placeholder="Contoh: Keripik Tempe Organik" className="h-12 bg-white/50 border-slate-200 focus:border-primary transition-all shadow-sm" {...field} />
+                            <Input placeholder="Contoh: Keripik Tempe Organik" className="h-12 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -302,7 +302,7 @@ export default function AssessmentPage() {
                           <FormLabel className="font-bold text-slate-700">Kategori Produk</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-12 bg-white/50 border-slate-200">
+                              <SelectTrigger className="h-12 bg-white/80 border-slate-200">
                                 <SelectValue placeholder="Pilih kategori" />
                               </SelectTrigger>
                             </FormControl>
@@ -325,7 +325,7 @@ export default function AssessmentPage() {
                           <FormControl>
                             <Textarea 
                               placeholder="Jelaskan keunggulan dan bahan baku utama produk Anda..." 
-                              className="min-h-[120px] bg-white/50 border-slate-200 focus:border-primary transition-all shadow-sm resize-none"
+                              className="min-h-[120px] bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm resize-none"
                               {...field} 
                             />
                           </FormControl>
@@ -345,7 +345,7 @@ export default function AssessmentPage() {
                             </span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Opsional (Contoh: 1905.90)" className="h-12 bg-white/50 border-slate-200 focus:border-primary transition-all shadow-sm" {...field} />
+                            <Input placeholder="Opsional (Contoh: 1905.90)" className="h-12 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm" {...field} />
                           </FormControl>
                           <FormDescription className="text-slate-400 italic">Opsional, membantu AI dalam analisis regulasi pasar.</FormDescription>
                           <FormMessage />
@@ -364,7 +364,7 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border-none shadow-2xl glass rounded-[2.5rem] overflow-visible">
+                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
@@ -385,7 +385,7 @@ export default function AssessmentPage() {
                           <FormItem>
                             <FormLabel className="font-bold text-slate-700">Kapasitas Produksi / Bulan</FormLabel>
                             <FormControl>
-                              <Input type="number" className="h-12 bg-white/50 border-slate-200" {...field} value={field.value as any} />
+                              <Input type="number" className="h-12 bg-white/80 border-slate-200" {...field} value={field.value as any} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -399,7 +399,7 @@ export default function AssessmentPage() {
                             <FormLabel className="font-bold text-slate-700">Unit</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="h-12 bg-white/50 border-slate-200">
+                                <SelectTrigger className="h-12 bg-white/80 border-slate-200">
                                   <SelectValue placeholder="Pilih unit" />
                                 </SelectTrigger>
                               </FormControl>
@@ -426,7 +426,7 @@ export default function AssessmentPage() {
                               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
                               <Input 
                                 type="text" 
-                                className="pl-12 h-14 text-lg font-bold bg-white/50 border-slate-200 shadow-inner" 
+                                className="pl-12 h-14 text-lg font-bold bg-white/80 border-slate-200 shadow-inner" 
                                 placeholder="0"
                                 value={field.value ? new Intl.NumberFormat('id-ID').format(Number(field.value)) : ''}
                                 onChange={(e) => {
@@ -444,7 +444,7 @@ export default function AssessmentPage() {
                       control={form.control}
                       name="hasOnlinePresence"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-[1.5rem] border bg-slate-50/50 p-6 shadow-sm">
+                        <FormItem className="flex items-center justify-between rounded-[1.5rem] border border-white/60 bg-white/60 p-6 shadow-sm">
                           <div className="space-y-1">
                             <FormLabel className="text-lg font-bold text-slate-800">Kehadiran Online</FormLabel>
                             <FormDescription className="font-medium text-slate-500">
@@ -469,7 +469,7 @@ export default function AssessmentPage() {
                           <FormLabel className="font-bold text-slate-700">Pengalaman Ekspor Sebelumnya</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-12 bg-white/50 border-slate-200">
+                              <SelectTrigger className="h-12 bg-white/80 border-slate-200">
                                 <SelectValue placeholder="Pilih pengalaman" />
                               </SelectTrigger>
                             </FormControl>
@@ -495,7 +495,7 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border-none shadow-2xl glass rounded-[2.5rem] overflow-visible">
+                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
@@ -528,7 +528,7 @@ export default function AssessmentPage() {
                                       className={`flex flex-row items-center space-x-3 space-y-0 rounded-2xl border-2 p-4 transition-all ${
                                         isSelected 
                                           ? 'bg-primary/5 border-primary shadow-sm' 
-                                          : 'bg-white/50 border-slate-100 hover:bg-white hover:border-slate-200 shadow-none!'
+                                          : 'bg-white/70 border-slate-100 hover:bg-white hover:border-slate-200 shadow-none!'
                                       }`}
                                     >
                                       <FormControl>
@@ -571,7 +571,7 @@ export default function AssessmentPage() {
                           <FormLabel className="font-bold text-slate-700">Apakah produk memenuhi standar internasional?</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-12 bg-white/50 border-slate-200">
+                              <SelectTrigger className="h-12 bg-white/80 border-slate-200">
                                 <SelectValue placeholder="Pilih salah satu" />
                               </SelectTrigger>
                             </FormControl>
@@ -597,7 +597,7 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border-none shadow-2xl glass rounded-[2.5rem] overflow-visible">
+                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
@@ -630,7 +630,7 @@ export default function AssessmentPage() {
                                       className={`flex flex-row items-center space-x-3 space-y-0 rounded-2xl border-2 p-4 transition-all ${
                                         isSelected 
                                           ? 'bg-primary/5 border-primary shadow-sm' 
-                                          : 'bg-white/50 border-slate-100 hover:bg-white hover:border-slate-200 shadow-none!'
+                                          : 'bg-white/70 border-slate-100 hover:bg-white hover:border-slate-200 shadow-none!'
                                       }`}
                                     >
                                       <FormControl>
@@ -672,7 +672,7 @@ export default function AssessmentPage() {
                         <FormItem>
                           <FormLabel className="font-bold text-slate-700">Email untuk Menerima Laporan</FormLabel>
                           <FormControl>
-                            <Input placeholder="anda@perusahaan.com" type="email" className="h-14 text-lg bg-white shadow-inner border-slate-200 rounded-2xl" {...field} />
+                            <Input placeholder="anda@perusahaan.com" type="email" className="h-14 text-lg bg-white/80 shadow-inner border-slate-200 rounded-2xl" {...field} />
                           </FormControl>
                           <FormDescription className="text-slate-400 font-medium">Analisis akan dikirimkan ke email ini.</FormDescription>
                           <FormMessage />

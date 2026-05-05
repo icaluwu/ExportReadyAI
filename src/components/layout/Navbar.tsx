@@ -4,10 +4,10 @@ import { UserMenu } from './UserMenu';
 
 export function Navbar() {
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-white/70 backdrop-blur-xl shadow-sm">
+    <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative overflow-hidden rounded-lg shadow-lg shadow-primary/20 transition-transform group-hover:scale-110 duration-300">
+          <div className="relative overflow-hidden rounded-lg shadow-md shadow-primary/10 transition-transform group-hover:scale-105 duration-300 bg-white">
             <Image 
               src="/logo.png" 
               alt="ExportReady AI Logo" 
@@ -23,6 +23,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           <Link href="/#features" className="text-sm font-semibold text-slate-500 hover:text-primary transition-all hover:translate-y-[-1px]">Fitur</Link>
           <Link href="/#how-it-works" className="text-sm font-semibold text-slate-500 hover:text-primary transition-all hover:translate-y-[-1px]">Cara Kerja</Link>
+          <Link href="/materi-belajar" className="text-sm font-semibold text-slate-500 hover:text-primary transition-all hover:translate-y-[-1px]">Materi</Link>
           <Link href="/dashboard" className="text-sm font-semibold text-slate-500 hover:text-primary transition-all hover:translate-y-[-1px]">Dashboard</Link>
         </div>
 
