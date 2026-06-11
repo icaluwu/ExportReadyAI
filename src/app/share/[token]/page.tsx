@@ -15,7 +15,7 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'Hasil Analisis Kesiapan Ekspor (Dibagikan)',
@@ -211,9 +211,11 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
         <p className="mx-auto mb-8 max-w-xl font-medium text-slate-400">
           Dapatkan skor kesiapan, rekomendasi negara tujuan, dan roadmap 4 fase—gratis dan kurang dari 30 menit.
         </p>
-        <Link href="/assessment" className={buttonVariants({ size: 'lg', className: 'h-14 rounded-2xl bg-primary px-10 font-black shadow-lg' })}>
-          Cek Kesiapan Saya <ArrowRight className="ml-2 h-5 w-5" />
-        </Link>
+        <Button asChild size="lg" className="h-14 rounded-2xl bg-primary px-10 font-black shadow-lg">
+          <Link href="/assessment">
+            Cek Kesiapan Saya <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

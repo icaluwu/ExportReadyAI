@@ -5,7 +5,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getServerSiteUrl()
   const now = new Date()
 
-  const routes = ['', '/assessment', '/login', '/register', '/materi-belajar'].map((path) => ({
+  const routes = [
+    '',
+    '/assessment',
+    '/login',
+    '/register',
+    '/materi-belajar',
+    '/sertifikasi',
+    '/kebijakan-privasi',
+    '/syarat-ketentuan',
+  ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: now,
     changeFrequency: 'weekly' as const,

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'Direktori Sertifikasi Ekspor',
@@ -279,9 +279,11 @@ export default function SertifikasiPage() {
           Lakukan assessment gratis—AI kami akan menganalisis produk Anda dan menyusun prioritas
           sertifikasi dalam roadmap 4 fase.
         </p>
-        <Link href="/assessment" className={buttonVariants({ size: 'lg', className: 'h-14 rounded-2xl bg-primary px-10 font-black shadow-lg shadow-primary/15' })}>
-          Cek Kesiapan Ekspor Saya <ArrowRight className="ml-2 h-5 w-5" />
-        </Link>
+        <Button asChild size="lg" className="h-14 rounded-2xl bg-primary px-10 font-black shadow-lg shadow-primary/15">
+          <Link href="/assessment">
+            Cek Kesiapan Ekspor Saya <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
+        </Button>
       </div>
     </div>
   );
