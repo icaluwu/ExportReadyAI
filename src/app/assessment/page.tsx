@@ -18,7 +18,8 @@ import {
   Target,
   ArrowRight,
   Clock,
-  Save
+  Save,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -85,6 +86,9 @@ export default function AssessmentPage() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [user, setUser] = useState<any>(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [hsLoading, setHsLoading] = useState(false);
+  const [hsCandidates, setHsCandidates] = useState<Array<{ code: string; title: string; confidence: string; reason: string }>>([]);
+  const [hsNote, setHsNote] = useState('');
   const router = useRouter();
 
   const loadingMessages = [
@@ -186,6 +190,35 @@ export default function AssessmentPage() {
       clearInterval(messageInterval);
       setIsSubmitting(false);
       toast.error(error.message || "Terjadi kesalahan saat memproses data. Silakan coba lagi.");
+    }
+  }
+
+  async function findHsCode() {
+    const isValid = await form.trigger(['productName', 'description']);
+    if (!isValid) {
+      toast.error('Isi dulu nama produk dan deskripsi agar AI bisa mencari kode HS.');
+      return;
+    }
+    setHsLoading(true);
+    setHsCandidates([]);
+    try {
+      const res = await fetch('/api/hs-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: form.getValues('productName'),
+          category: form.getValues('category'),
+          description: form.getValues('description'),
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Gagal mencari kode HS.');
+      setHsCandidates(result.candidates || []);
+      setHsNote(result.note || '');
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal mencari kode HS.');
+    } finally {
+      setHsLoading(false);
     }
   }
 
@@ -389,9 +422,46 @@ export default function AssessmentPage() {
                               <Info className="h-4 w-4" />
                             </span>
                           </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Opsional (Contoh: 1905.90)" className="h-12 bg-card/80 border-border focus:border-primary transition-all shadow-sm" {...field} />
-                          </FormControl>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <FormControl>
+                              <Input placeholder="Opsional (Contoh: 1905.90)" className="h-12 bg-card/80 border-border focus:border-primary transition-all shadow-sm" {...field} />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={findHsCode}
+                              disabled={hsLoading}
+                              className="h-12 shrink-0 rounded-xl border-2 font-bold gap-2 text-primary border-primary/30 hover:bg-primary/5"
+                            >
+                              {hsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                              {hsLoading ? 'Mencari...' : 'Cari dengan AI'}
+                            </Button>
+                          </div>
+                          {hsCandidates.length > 0 && (
+                            <div className="mt-3 space-y-2 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                              <p className="text-xs font-black uppercase tracking-widest text-primary">Kandidat dari AI — klik untuk pakai</p>
+                              {hsCandidates.map((c) => (
+                                <button
+                                  key={c.code}
+                                  type="button"
+                                  onClick={() => {
+                                    form.setValue('hsCode', c.code, { shouldDirty: true });
+                                    toast.success(`Kode HS ${c.code} dipilih.`);
+                                  }}
+                                  className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all hover:border-primary hover:bg-card ${
+                                    field.value === c.code ? 'border-primary bg-card shadow-sm' : 'border-border bg-card/60'
+                                  }`}
+                                >
+                                  <span className="rounded-lg bg-primary px-2.5 py-1 text-xs font-black text-primary-foreground shrink-0">{c.code}</span>
+                                  <span className="min-w-0">
+                                    <span className="block text-sm font-bold text-foreground">{c.title} <span className="text-[10px] font-black uppercase text-muted-foreground">({c.confidence})</span></span>
+                                    <span className="block text-xs font-medium text-muted-foreground">{c.reason}</span>
+                                  </span>
+                                </button>
+                              ))}
+                              {hsNote && <p className="text-[11px] italic text-muted-foreground">{hsNote}</p>}
+                            </div>
+                          )}
                           <FormDescription className="text-muted-foreground/80 italic">Opsional, membantu AI dalam analisis regulasi pasar.</FormDescription>
                           <FormMessage />
                         </FormItem>
