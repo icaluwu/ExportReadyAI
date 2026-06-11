@@ -14,7 +14,8 @@ import {
   Loader2,
   Calendar,
   Zap,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -24,7 +25,9 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Cell 
+  Cell,
+  AreaChart,
+  Area
 } from 'recharts';
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -117,6 +120,41 @@ export default function DashboardPage() {
     getDashboardData();
   }, [router]);
 
+  // Prefill the assessment form from a previous assessment via the autosave draft
+  function startReassessment(item: any) {
+    const draft = {
+      step: 1,
+      values: {
+        productName: item.product_name || '',
+        category: item.category || '',
+        description: item.description || '',
+        hsCode: item.hs_code || '',
+        capacity: item.capacity || 0,
+        capacityUnit: item.capacity_unit || 'pcs',
+        price: item.price || 0,
+        hasOnlinePresence: !!item.has_online_presence,
+        exportExperience: item.export_experience || '',
+        certifications: item.certifications || [],
+        meetsInternationalStandards: item.meets_international_standards || '',
+        hasTrademark: !!item.has_trademark,
+        targetMarkets: item.target_markets || [],
+        exportMotivation: item.export_motivation || '',
+        email: item.email || user?.email || '',
+      },
+    };
+    localStorage.setItem('exportready-assessment-draft', JSON.stringify(draft));
+    router.push('/assessment');
+  }
+
+  const trendData = [...history]
+    .filter((a) => a.status === 'completed')
+    .reverse()
+    .map((a) => ({
+      name: a.product_name,
+      score: a.readiness_score || 0,
+      date: new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+    }));
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -168,6 +206,56 @@ export default function DashboardPage() {
           delay={0.3}
         />
       </div>
+
+      {/* Score trend over time */}
+      {trendData.length >= 2 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-12">
+          <Card className="glass border-none shadow-xl rounded-[2rem] overflow-hidden">
+            <CardHeader className="p-8 pb-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-primary/10 rounded-xl text-primary"><TrendingUp className="h-5 w-5" /></div>
+                <div>
+                  <CardTitle className="text-xl font-black text-foreground">Tren Skor Kesiapan</CardTitle>
+                  <CardDescription className="font-medium">Perkembangan skor dari seluruh assessment Anda.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 pt-6">
+              <div className="h-[240px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="scoreTrend" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 700 }} dy={8} />
+                    <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 700 }} />
+                    <Tooltip
+                      cursor={{ stroke: 'var(--border)' }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-popover p-4 rounded-xl shadow-2xl border border-border">
+                              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">{payload[0].payload.name}</p>
+                              <p className="text-lg font-black text-foreground">{payload[0].value}% Siap</p>
+                              <p className="text-[10px] font-bold text-muted-foreground">{payload[0].payload.date}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} fill="url(#scoreTrend)" dot={{ r: 4, fill: '#10b981', strokeWidth: 0 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent History */}
@@ -225,7 +313,7 @@ export default function DashboardPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-4 sm:gap-6 shrink-0">
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground/80 font-black uppercase tracking-widest mb-1">Score</p>
                           <p className={`text-xl font-black ${
@@ -235,6 +323,17 @@ export default function DashboardPage() {
                             {item.readiness_score || 0}%
                           </p>
                         </div>
+                        <button
+                          type="button"
+                          title="Assessment ulang produk ini (form terisi otomatis)"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startReassessment(item);
+                          }}
+                          className="p-2 rounded-full h-10 w-10 flex items-center justify-center bg-muted hover:bg-amber-500 hover:text-white transition-all"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
                         <div className="p-2 rounded-full h-10 w-10 flex items-center justify-center bg-muted group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                           <ArrowRight className="h-5 w-5" />
                         </div>
