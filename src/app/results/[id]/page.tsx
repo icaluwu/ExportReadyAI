@@ -41,6 +41,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChatPanel } from '@/components/chat/ChatPanel';
 import dynamic from 'next/dynamic';
 
 const PDFExporter = dynamic(() => import('./PDFExporter'), { 
@@ -407,6 +408,9 @@ export default function ResultsPage() {
           </Button>
         </div>
       </motion.div>
+
+      {/* AI Chat Consultant - aware of this assessment */}
+      <ChatPanel assessmentId={id} />
     </div>
   );
 }

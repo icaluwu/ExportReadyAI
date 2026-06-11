@@ -31,6 +31,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ChatPanel } from '@/components/chat/ChatPanel';
 import Link from 'next/link';
 
 interface UserStats {
@@ -381,6 +382,9 @@ export default function DashboardPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* AI Chat Consultant - aware of the latest assessment */}
+      <ChatPanel assessmentId={history[0]?.id} />
     </div>
   );
 }
