@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next'
+import { getServerSiteUrl } from '@/lib/site-url'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://export-ready-ai.vercel.app'
+  const baseUrl = getServerSiteUrl()
   const now = new Date()
 
   const routes = ['', '/assessment', '/login', '/register', '/materi-belajar'].map((path) => ({

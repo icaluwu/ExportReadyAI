@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase, SUPABASE_CONFIG_ERROR } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { getSiteUrl } from '@/lib/site-url';
 
@@ -60,6 +60,10 @@ function LoginInner() {
   }, [searchParams]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isSupabaseConfigured()) {
+      toast.error(SUPABASE_CONFIG_ERROR);
+      return;
+    }
     setLoading(true);
     setEmailForResend(values.email);
     const { error } = await supabase.auth.signInWithPassword({
@@ -78,6 +82,10 @@ function LoginInner() {
   }
 
   async function resendVerification() {
+    if (!isSupabaseConfigured()) {
+      toast.error(SUPABASE_CONFIG_ERROR);
+      return;
+    }
     if (!emailForResend) {
       toast.error('Masukkan email Anda dulu.')
       return

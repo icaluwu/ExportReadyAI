@@ -16,6 +16,20 @@ Proyek ini dikembangkan dengan bantuan **Artificial Intelligence (AI) sebesar ±
 - **AI Engine**: Google Gemini API (gemini-3-flash-preview)
 - **Komponen**: Framer Motion & Recharts
 
+## 🚀 Deployment
+
+| Environment | Platform |
+|-------------|----------|
+| Prototype / preview | [Vercel](https://vercel.com) |
+| Production | [Google Cloud Run](https://cloud.google.com/run) |
+
+- **Local setup**: copy [`.env.example`](.env.example) → `.env.local`, then `npm install && npm run dev`
+- **Vercel login issues**: [docs/VERCEL_CHECKLIST.md](docs/VERCEL_CHECKLIST.md)
+- **Full guide (Vercel + Cloud Run + Supabase)**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+Production URL (Vercel): `https://export-ready-ai.vercel.app`  
+Branch previews use `export-ready-ai-git-<branch>-<team>.vercel.app` — this is normal Vercel behavior.
+
 ## 💡 Manfaat & Kegunaan
 1. **Self-Assessment**: Mengetahui kelemahan dan kekuatan produk untuk pasar ekspor.
 2. **Market Intelligence**: Rekomendasi 3 negara terbaik berdasarkan profil produk.
