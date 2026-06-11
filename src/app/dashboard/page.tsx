@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [roadmapDone, setRoadmapDone] = useState<Record<string, number>>({});
   const [stats, setStats] = useState<UserStats>({
     totalAssessments: 0,
     avgScore: 0,
@@ -93,6 +94,21 @@ export default function DashboardPage() {
           avgScore: avg,
           topCountry: topCountry || '-',
         });
+
+        // Roadmap checklist progress per assessment
+        const { data: progressRows } = await supabase
+          .from('roadmap_progress')
+          .select('assessment_id, done')
+          .eq('user_id', session.user.id)
+          .eq('done', true);
+
+        if (progressRows) {
+          const doneMap: Record<string, number> = {};
+          for (const row of progressRows) {
+            doneMap[row.assessment_id] = (doneMap[row.assessment_id] || 0) + 1;
+          }
+          setRoadmapDone(doneMap);
+        }
       }
       
       setLoading(false);
@@ -165,7 +181,13 @@ export default function DashboardPage() {
 
           <div className="space-y-4">
             {history.length > 0 ? (
-              history.slice(0, 5).map((item, idx) => (
+              history.slice(0, 5).map((item, idx) => {
+                const roadmap = item.ai_result?.roadmap;
+                const totalSteps = roadmap
+                  ? ['fase1', 'fase2', 'fase3', 'fase4'].reduce((acc, f) => acc + (roadmap[f]?.length || 0), 0)
+                  : 0;
+                const doneSteps = Math.min(roadmapDone[item.id] || 0, totalSteps);
+                return (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -177,17 +199,30 @@ export default function DashboardPage() {
                     onClick={() => router.push(`/results/${item.id}`)}
                   >
                     <CardContent className="p-6 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 min-w-0">
                         <div className="p-3 bg-card rounded-xl shadow-sm group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                           <Zap className="h-5 w-5" />
                         </div>
-                        <div>
-                          <h3 className="font-bold text-foreground">{item.product_name}</h3>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-foreground truncate">{item.product_name}</h3>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground/80 font-medium">
                             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(item.created_at).toLocaleDateString('id-ID')}</span>
                             <span className="h-1 w-1 bg-border rounded-full" />
                             <span>{item.status === 'completed' ? 'Analisis Selesai' : 'Sedang Diproses'}</span>
                           </div>
+                          {totalSteps > 0 && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="h-1.5 w-28 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full bg-emerald-500 transition-all"
+                                  style={{ width: `${Math.round((doneSteps / totalSteps) * 100)}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-bold text-muted-foreground">
+                                Roadmap {doneSteps}/{totalSteps}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-6">
@@ -207,7 +242,8 @@ export default function DashboardPage() {
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))
+                );
+              })
             ) : (
               <Card className="glass border-dashed border-2 border-border shadow-none py-10 text-center rounded-[2rem]">
                 <CardContent>

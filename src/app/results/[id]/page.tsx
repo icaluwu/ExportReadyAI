@@ -42,6 +42,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatPanel } from '@/components/chat/ChatPanel';
+import { RoadmapChecklist } from '@/components/roadmap/RoadmapChecklist';
 import dynamic from 'next/dynamic';
 
 const PDFExporter = dynamic(() => import('./PDFExporter'), { 
@@ -367,13 +368,7 @@ export default function ResultsPage() {
               <CardDescription className="text-slate-500 font-medium">Panduan langkah demi langkah menuju ekspor perdana.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-12">
-              <div className="space-y-12 relative">
-                <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-slate-100" />
-                <RoadmapPhase title="Fase 1: Persiapan Dasar" subtitle="Bulan 0-1" items={data.ai_result.roadmap.fase1} icon={<Zap className="h-5 w-5" />} color="bg-amber-500" isExporting={isExporting} />
-                <RoadmapPhase title="Fase 2: Standarisasi" subtitle="Bulan 1-3" items={data.ai_result.roadmap.fase2} icon={<ShieldCheck className="h-5 w-5" />} color="bg-primary" isExporting={isExporting} />
-                <RoadmapPhase title="Fase 3: Penetrasi Pasar" subtitle="Bulan 3-6" items={data.ai_result.roadmap.fase3} icon={<TrendingUp className="h-5 w-5" />} color="bg-emerald-500" isExporting={isExporting} />
-                <RoadmapPhase title="Fase 4: Scale Up" subtitle="Bulan 6+" items={data.ai_result.roadmap.fase4} icon={<Award className="h-5 w-5" />} color="bg-blue-600" isExporting={isExporting} />
-              </div>
+              <RoadmapChecklist assessmentId={id} roadmap={data.ai_result.roadmap} />
             </CardContent>
           </Card>
         </div>
@@ -414,68 +409,6 @@ export default function ResultsPage() {
     </div>
   );
 }
-
-function RoadmapPhase({ title, subtitle, items, icon, color, isExporting }: { title: string, subtitle: string, items: string[], icon: React.ReactNode, color: string, isExporting?: boolean }) {
-  if (isExporting) {
-    return (
-      <div className="relative pl-16">
-        {/* Icon Node */}
-        <div className={`absolute left-0 top-0 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg ${color} z-10`}>
-          {icon}
-        </div>
-        
-        <div className="p-8 rounded-[2rem] bg-white border-2 border-slate-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-            <h4 className="text-xl font-black text-slate-900">{title}</h4>
-            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shrink-0 w-fit ${color} shadow-sm`}>
-              {subtitle}
-            </span>
-          </div>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {items.map((item, i) => (
-              <li key={i} className="flex gap-3 text-slate-600 text-sm font-semibold">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      className="relative pl-16 group"
-    >
-      {/* Icon Node */}
-      <div className={`absolute left-0 top-0 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-black/10 transition-transform group-hover:scale-110 z-10 ${color}`}>
-        {icon}
-      </div>
-      
-      <div className="p-8 rounded-[2rem] bg-white border border-slate-100 shadow-sm transition-all group-hover:shadow-xl group-hover:border-primary/20">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-          <h4 className="text-xl font-black text-slate-900">{title}</h4>
-          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shrink-0 w-fit ${color} opacity-90 shadow-sm`}>
-            {subtitle}
-          </span>
-        </div>
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map((item, i) => (
-            <li key={i} className="flex gap-3 text-slate-500 text-sm font-medium">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </motion.div>
-  );
-}
-
-
 
 function ResultsSkeleton() {
   return (
