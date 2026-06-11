@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export function Footer() {
   return (
-    <footer className="border-t bg-white/60 py-12">
+    <footer className="border-t bg-card/60 py-12">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="col-span-1 md:col-span-2">
@@ -27,6 +27,7 @@ export function Footer() {
               <li><Link href="/#features" className="hover:text-primary transition-colors">Fitur Utama</Link></li>
               <li><Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard Riwayat</Link></li>
               <li><Link href="/materi-belajar" className="hover:text-primary transition-colors">Materi Belajar</Link></li>
+              <li><Link href="/sertifikasi" className="hover:text-primary transition-colors">Direktori Sertifikasi</Link></li>
             </ul>
           </div>
           <div>

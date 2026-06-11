@@ -96,37 +96,38 @@
 }
 
 .dark {
-  --background: hsl(260, 15%, 14.5%);
-  --foreground: hsl(0, 0%, 98.5%);
-  --card: hsl(260, 10%, 20.5%);
-  --card-foreground: hsl(0, 0%, 98.5%);
-  --popover: hsl(260, 10%, 20.5%);
-  --popover-foreground: hsl(0, 0%, 98.5%);
-  --primary: hsl(0, 0%, 92.2%);
-  --primary-foreground: hsl(260, 10%, 20.5%);
-  --secondary: hsl(0, 0%, 26.9%);
-  --secondary-foreground: hsl(0, 0%, 98.5%);
-  --muted: hsl(0, 0%, 26.9%);
-  --muted-foreground: hsl(0, 0%, 70.8%);
-  --accent: hsl(0, 0%, 26.9%);
-  --accent-foreground: hsl(0, 0%, 98.5%);
-  --destructive: hsl(0, 62%, 45%);
+  /* Brand-aligned dark palette: deep navy surfaces + lighter blue primary + amber accent */
+  --background: hsl(222, 32%, 10%);
+  --foreground: hsl(40, 25%, 96%);
+  --card: hsl(222, 28%, 14%);
+  --card-foreground: hsl(40, 25%, 96%);
+  --popover: hsl(222, 28%, 14%);
+  --popover-foreground: hsl(40, 25%, 96%);
+  --primary: hsl(217, 75%, 64%);
+  --primary-foreground: hsl(222, 32%, 10%);
+  --secondary: hsl(222, 22%, 18%);
+  --secondary-foreground: hsl(40, 25%, 96%);
+  --muted: hsl(222, 22%, 18%);
+  --muted-foreground: hsl(220, 14%, 68%);
+  --accent: hsl(32, 90%, 55%);
+  --accent-foreground: hsl(222, 32%, 10%);
+  --destructive: hsl(0, 70%, 55%);
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.15);
-  --ring: hsl(0, 0%, 55.6%);
-  --chart-1: hsl(0, 0%, 87%);
-  --chart-2: hsl(0, 0%, 55.6%);
-  --chart-3: hsl(0, 0%, 43.9%);
-  --chart-4: hsl(0, 0%, 37.1%);
-  --chart-5: hsl(0, 0%, 26.9%);
-  --sidebar: hsl(260, 10%, 20.5%);
-  --sidebar-foreground: hsl(0, 0%, 98.5%);
-  --sidebar-primary: hsl(264, 45%, 48.8%);
-  --sidebar-primary-foreground: hsl(0, 0%, 98.5%);
-  --sidebar-accent: hsl(0, 0%, 26.9%);
-  --sidebar-accent-foreground: hsl(0, 0%, 98.5%);
+  --ring: hsl(217, 75%, 64%);
+  --chart-1: hsl(217, 75%, 64%);
+  --chart-2: hsl(160, 70%, 50%);
+  --chart-3: hsl(32, 90%, 55%);
+  --chart-4: hsl(220, 14%, 68%);
+  --chart-5: hsl(220, 10%, 50%);
+  --sidebar: hsl(222, 28%, 14%);
+  --sidebar-foreground: hsl(40, 25%, 96%);
+  --sidebar-primary: hsl(217, 75%, 64%);
+  --sidebar-primary-foreground: hsl(222, 32%, 10%);
+  --sidebar-accent: hsl(222, 22%, 18%);
+  --sidebar-accent-foreground: hsl(40, 25%, 96%);
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: hsl(0, 0%, 55.6%);
+  --sidebar-ring: hsl(217, 75%, 64%);
 }
 
 @layer base {
@@ -143,7 +144,7 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/30 shadow-[0_10px_30px_-15px_rgba(15,23,42,0.18)];
+    @apply bg-white/80 backdrop-blur-md border border-white/30 shadow-[0_10px_30px_-15px_rgba(15,23,42,0.18)] dark:bg-card/80 dark:border-white/10;
   }
   
   .glass-dark {

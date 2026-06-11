@@ -79,11 +79,18 @@ export default function DashboardPage() {
           ? Math.round(completed.reduce((acc, curr) => acc + (curr.readiness_score || 0), 0) / total)
           : 0;
         
-        // Find most frequent top country (dummy logic for now as ai_result is JSON)
+        // Most frequent #1 recommended country across assessments
+        const countryCount = new Map<string, number>();
+        for (const a of completed) {
+          const top = a.ai_result?.topCountries?.[0]?.country;
+          if (top) countryCount.set(top, (countryCount.get(top) || 0) + 1);
+        }
+        const topCountry = [...countryCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+
         setStats({
           totalAssessments: total,
           avgScore: avg,
-          topCountry: total > 0 ? 'Ekspansi Global' : '-',
+          topCountry: topCountry || '-',
         });
       }
       
@@ -109,8 +116,8 @@ export default function DashboardPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Overview Ekspor</h1>
-          <p className="text-lg text-slate-500 font-medium">Selamat datang kembali, <span className="text-primary font-bold">{user?.user_metadata?.full_name || user?.email}</span></p>
+          <h1 className="text-4xl font-black text-foreground mb-2 tracking-tight">Overview Ekspor</h1>
+          <p className="text-lg text-muted-foreground font-medium">Selamat datang kembali, <span className="text-primary font-bold">{user?.user_metadata?.full_name || user?.email}</span></p>
         </div>
         <Button 
           onClick={() => router.push('/assessment')}
@@ -126,21 +133,21 @@ export default function DashboardPage() {
           title="Total Assessment" 
           value={stats.totalAssessments.toString()} 
           icon={<History className="h-6 w-6 text-blue-500" />} 
-          color="bg-blue-50"
+          color="bg-blue-50 dark:bg-blue-500/10"
           delay={0.1}
         />
         <StatCard 
           title="Rata-rata Skor" 
           value={`${stats.avgScore}%`} 
           icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} 
-          color="bg-emerald-50"
+          color="bg-emerald-50 dark:bg-emerald-500/10"
           delay={0.2}
         />
         <StatCard 
-          title="Status Utama" 
+          title="Top Negara Tujuan" 
           value={stats.topCountry} 
           icon={<Globe2 className="h-6 w-6 text-amber-500" />} 
-          color="bg-amber-50"
+          color="bg-amber-50 dark:bg-amber-500/10"
           delay={0.3}
         />
       </div>
@@ -149,7 +156,7 @@ export default function DashboardPage() {
         {/* Recent History */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-2xl font-black text-slate-900">Riwayat Terakhir</h2>
+            <h2 className="text-2xl font-black text-foreground">Riwayat Terakhir</h2>
             <Link href="/profile" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
               Lihat Semua <ChevronRight className="h-4 w-4" />
             </Link>
@@ -170,21 +177,21 @@ export default function DashboardPage() {
                   >
                     <CardContent className="p-6 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-primary group-hover:text-white transition-colors">
+                        <div className="p-3 bg-card rounded-xl shadow-sm group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                           <Zap className="h-5 w-5" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-slate-900">{item.product_name}</h3>
-                          <div className="flex items-center gap-3 text-xs text-slate-400 font-medium">
+                          <h3 className="font-bold text-foreground">{item.product_name}</h3>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground/80 font-medium">
                             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(item.created_at).toLocaleDateString('id-ID')}</span>
-                            <span className="h-1 w-1 bg-slate-200 rounded-full" />
+                            <span className="h-1 w-1 bg-border rounded-full" />
                             <span>{item.status === 'completed' ? 'Analisis Selesai' : 'Sedang Diproses'}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-6">
                         <div className="text-right">
-                          <p className="text-xs text-slate-400 font-black uppercase tracking-widest mb-1">Score</p>
+                          <p className="text-xs text-muted-foreground/80 font-black uppercase tracking-widest mb-1">Score</p>
                           <p className={`text-xl font-black ${
                             (item.readiness_score || 0) < 40 ? 'text-red-500' : 
                             (item.readiness_score || 0) < 70 ? 'text-amber-500' : 'text-emerald-500'
@@ -192,7 +199,7 @@ export default function DashboardPage() {
                             {item.readiness_score || 0}%
                           </p>
                         </div>
-                        <div className="p-2 rounded-full h-10 w-10 flex items-center justify-center bg-slate-50 group-hover:bg-primary group-hover:text-white transition-all">
+                        <div className="p-2 rounded-full h-10 w-10 flex items-center justify-center bg-muted group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                           <ArrowRight className="h-5 w-5" />
                         </div>
                       </div>
@@ -201,14 +208,27 @@ export default function DashboardPage() {
                 </motion.div>
               ))
             ) : (
-              <Card className="glass border-dashed border-2 border-slate-200 shadow-none py-12 text-center rounded-[2rem]">
+              <Card className="glass border-dashed border-2 border-border shadow-none py-10 text-center rounded-[2rem]">
                 <CardContent>
-                  <div className="p-4 bg-slate-50 rounded-full w-fit mx-auto mb-4">
-                    <History className="h-8 w-8 text-slate-300" />
+                  <div className="p-4 bg-primary/10 rounded-full w-fit mx-auto mb-4">
+                    <Zap className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">Belum Ada History</h3>
-                  <p className="text-slate-500 max-w-xs mx-auto mb-6">Mulai assessment pertama Anda untuk melihat analisis detail produk Anda.</p>
-                  <Button onClick={() => router.push('/assessment')} variant="outline" className="border-2 font-bold rounded-xl">Mulai Sekarang</Button>
+                  <h3 className="text-xl font-black text-foreground mb-2">Mulai Perjalanan Ekspor Anda</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+                    Dalam ± 10 menit, Anda akan tahu skor kesiapan ekspor produk Anda, negara tujuan terbaik, dan roadmap langkah demi langkah.
+                  </p>
+                  <div className="flex flex-col items-center gap-4 mb-6 text-sm font-medium text-muted-foreground">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <span className="rounded-full bg-card border border-border px-3 py-1">1. Isi profil produk</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                      <span className="rounded-full bg-card border border-border px-3 py-1">2. AI menganalisis</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                      <span className="rounded-full bg-card border border-border px-3 py-1">3. Eksekusi roadmap</span>
+                    </div>
+                  </div>
+                  <Button onClick={() => router.push('/assessment')} className="bg-primary font-bold rounded-xl h-12 px-8 shadow-lg shadow-primary/20">
+                    Mulai Assessment Pertama <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -217,7 +237,7 @@ export default function DashboardPage() {
 
         {/* Quick Links / Sidebar */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-black text-slate-900 px-2">Aksi Cepat</h2>
+          <h2 className="text-2xl font-black text-foreground px-2">Aksi Cepat</h2>
           <div className="grid grid-cols-1 gap-4">
             <QuickLink 
               title="Konsultasi Pakar" 
@@ -246,7 +266,7 @@ export default function DashboardPage() {
           <Card className="bg-slate-900 text-white border-none rounded-[2rem] p-8 relative overflow-hidden group shadow-2xl">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform" />
             <h3 className="text-xl font-bold mb-3 relative z-10">ExportReady <span className="text-primary font-black italic">PRO</span></h3>
-            <p className="text-slate-400 text-sm mb-6 relative z-10">Dapatkan akses ke jaringan buyer internasional dan perizinan lebih cepat.</p>
+            <p className="text-muted-foreground/80 text-sm mb-6 relative z-10">Dapatkan akses ke jaringan buyer internasional dan perizinan lebih cepat.</p>
             <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold h-12 rounded-xl relative z-10">Upgrade Sekarang</Button>
           </Card>
         </div>
@@ -271,9 +291,9 @@ export default function DashboardPage() {
             >
               <button 
                 onClick={() => setShowRoadmap(false)}
-                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition-colors"
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-muted transition-colors"
               >
-                <X className="h-6 w-6 text-slate-400" />
+                <X className="h-6 w-6 text-muted-foreground/80" />
               </button>
 
               <div className="flex items-center gap-4 mb-8">
@@ -281,8 +301,8 @@ export default function DashboardPage() {
                   <TrendingUp className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Progress Roadmap Ekspor</h3>
-                  <p className="text-slate-500 font-medium text-sm">Grafik kesiapan berdasarkan seluruh produk yang Anda input.</p>
+                  <h3 className="text-2xl font-black text-foreground tracking-tight">Progress Roadmap Ekspor</h3>
+                  <p className="text-muted-foreground font-medium text-sm">Grafik kesiapan berdasarkan seluruh produk yang Anda input.</p>
                 </div>
               </div>
 
@@ -311,9 +331,9 @@ export default function DashboardPage() {
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-100">
-                                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">{payload[0].payload.product_name}</p>
-                                <p className="text-lg font-black text-slate-900">{payload[0].value}% Siap</p>
+                              <div className="bg-popover p-4 rounded-xl shadow-2xl border border-border">
+                                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">{payload[0].payload.product_name}</p>
+                                <p className="text-lg font-black text-foreground">{payload[0].value}% Siap</p>
                               </div>
                             );
                           }
@@ -338,17 +358,17 @@ export default function DashboardPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-3xl">
-                    <History className="h-12 w-12 text-slate-200 mb-4" />
-                    <p className="text-slate-400 font-bold">Belum ada data untuk ditampilkan</p>
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted rounded-3xl">
+                    <History className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                    <p className="text-muted-foreground/80 font-bold">Belum ada data untuk ditampilkan</p>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 bg-muted rounded-3xl border border-border">
                 <div className="text-center sm:text-left">
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Rata-rata Kesiapan</p>
-                  <p className="text-3xl font-black text-slate-900 tracking-tight">{stats.avgScore}%</p>
+                  <p className="text-xs font-black text-muted-foreground/80 uppercase tracking-widest mb-1">Rata-rata Kesiapan</p>
+                  <p className="text-3xl font-black text-foreground tracking-tight">{stats.avgScore}%</p>
                 </div>
                 <Button 
                   onClick={() => router.push('/assessment')}
@@ -378,10 +398,10 @@ function StatCard({ title, value, icon, color, delay }: { title: string, value: 
             <div className={`p-4 rounded-2xl ${color} shadow-sm group-hover:scale-110 transition-transform`}>
               {icon}
             </div>
-            <ArrowRight className="h-5 w-5 text-slate-200 group-hover:text-primary transition-colors" />
+            <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
           </div>
-          <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
-          <p className="text-4xl font-black text-slate-900 tracking-tight">{value}</p>
+          <p className="text-sm font-black text-muted-foreground/80 uppercase tracking-widest mb-1">{title}</p>
+          <p className="text-4xl font-black text-foreground tracking-tight">{value}</p>
         </CardContent>
       </Card>
     </motion.div>
@@ -397,16 +417,16 @@ function QuickLink({ title, desc, icon, delay, onClick }: { title: string, desc:
     >
       <div 
         onClick={onClick}
-        className="flex items-center gap-5 p-6 rounded-[1.5rem] bg-white border-2 border-slate-100 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 transition-all cursor-pointer group"
+        className="flex items-center gap-5 p-6 rounded-[1.5rem] bg-card border-2 border-border hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 transition-all cursor-pointer group"
       >
-        <div className="p-4 bg-slate-50 rounded-2xl group-hover:bg-primary group-hover:text-white transition-all duration-300">
+        <div className="p-4 bg-muted rounded-2xl group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
           {icon}
         </div>
         <div className="flex-1">
-          <h4 className="font-black text-slate-900 text-lg leading-tight mb-1 group-hover:text-primary transition-colors">{title}</h4>
-          <p className="text-sm text-slate-500 font-bold leading-tight">{desc}</p>
+          <h4 className="font-black text-foreground text-lg leading-tight mb-1 group-hover:text-primary transition-colors">{title}</h4>
+          <p className="text-sm text-muted-foreground font-bold leading-tight">{desc}</p>
         </div>
-        <div className="p-2 rounded-full group-hover:bg-primary group-hover:text-white transition-all">
+        <div className="p-2 rounded-full group-hover:bg-primary group-hover:text-primary-foreground transition-all">
           <ChevronRight className="h-5 w-5" />
         </div>
       </div>

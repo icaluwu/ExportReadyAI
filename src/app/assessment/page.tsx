@@ -16,7 +16,9 @@ import {
   Factory,
   ShieldCheck,
   Target,
-  ArrowRight
+  ArrowRight,
+  Clock,
+  Save
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -72,11 +74,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const DRAFT_KEY = 'exportready-assessment-draft';
+
+// Perkiraan sisa waktu pengisian per langkah
+const STEP_ETA = ['± 5 menit', '± 4 menit', '± 2 menit', '± 1 menit'];
+
 export default function AssessmentPage() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [user, setUser] = useState<any>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const router = useRouter();
 
   const loadingMessages = [
@@ -113,11 +121,42 @@ export default function AssessmentPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        form.setValue('email', session.user.email || '');
+        if (!form.getValues('email')) {
+          form.setValue('email', session.user.email || '');
+        }
       }
     }
     getSession();
   }, [form]);
+
+  // Restore draft (auto-saved) once on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft?.values && draft.values.productName) {
+          form.reset({ ...form.getValues(), ...draft.values });
+          if (draft.step >= 1 && draft.step <= 4) setStep(draft.step);
+          toast.info('Draft assessment sebelumnya dimuat kembali.');
+        }
+      }
+    } catch {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+    setDraftLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save draft whenever values or step change
+  useEffect(() => {
+    if (!draftLoaded) return;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ values: form.getValues(), step }));
+    const sub = form.watch((values) => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ values, step }));
+    });
+    return () => sub.unsubscribe();
+  }, [form, step, draftLoaded]);
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -141,6 +180,7 @@ export default function AssessmentPage() {
       }
 
       clearInterval(messageInterval);
+      localStorage.removeItem(DRAFT_KEY);
       router.push(`/results/${result.assessmentId}`);
     } catch (error: any) {
       clearInterval(messageInterval);
@@ -195,20 +235,20 @@ export default function AssessmentPage() {
             </div>
           </div>
           <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-slate-900">Menganalisis Data</h2>
+            <h2 className="text-2xl font-bold text-foreground">Menganalisis Data</h2>
             <AnimatePresence mode="wait">
               <motion.p
                 key={loadingMessageIndex}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="text-slate-600 font-medium italic"
+                className="text-muted-foreground font-medium italic"
               >
                 "{loadingMessages[loadingMessageIndex]}"
               </motion.p>
             </AnimatePresence>
           </div>
-          <p className="text-sm text-slate-400">Mohon tunggu sebentar, AI kami sedang bekerja sangat keras untuk Anda.</p>
+          <p className="text-sm text-muted-foreground/80">Mohon tunggu sebentar, AI kami sedang bekerja sangat keras untuk Anda.</p>
         </motion.div>
       </div>
     );
@@ -225,17 +265,19 @@ export default function AssessmentPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">Cek Kesiapan Ekspor</h1>
-          <p className="text-base md:text-lg text-slate-600 font-medium">Lengkapi 4 langkah sederhana untuk membuka peluang pasar dunia.</p>
+          <h1 className="text-3xl md:text-4xl font-black text-foreground mb-3 tracking-tight">Cek Kesiapan Ekspor</h1>
+          <p className="text-base md:text-lg text-muted-foreground font-medium">Lengkapi 4 langkah sederhana untuk membuka peluang pasar dunia.</p>
         </motion.div>
       </div>
 
       <div className="mb-10 max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-4 px-2">
           <span className="text-sm font-bold text-primary uppercase tracking-widest">Langkah {step} / 4</span>
-          <span className="text-sm font-bold text-slate-400 capitalize">{Math.round((step / 4) * 100)}% Selesai</span>
+          <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground/80">
+            <Clock className="h-3.5 w-3.5" /> Sisa {STEP_ETA[step - 1]}
+          </span>
         </div>
-        <div className="relative h-3 w-full bg-white/70 rounded-full overflow-hidden shadow-inner border border-white/60">
+        <div className="relative h-3 w-full bg-card/70 rounded-full overflow-hidden shadow-inner border border-border/50">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${(step / 4) * 100}%` }}
@@ -247,15 +289,18 @@ export default function AssessmentPage() {
             <div 
               key={i} 
               className={`flex items-center justify-center w-8 h-8 rounded-xl font-bold text-xs transition-all duration-500 ${
-                i < step ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 
-                i === step ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' : 
-                'bg-white text-slate-300 border border-slate-100'
+                i < step ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40' : 
+                i === step ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110' : 
+                'bg-card text-muted-foreground/50 border border-border'
               }`}
             >
               {i < step ? <Check className="h-4 w-4" /> : i}
             </div>
           ))}
         </div>
+        <p className="flex items-center justify-center gap-1.5 pt-4 text-xs font-medium text-muted-foreground/70">
+          <Save className="h-3 w-3" /> Jawaban tersimpan otomatis di perangkat ini—aman jika halaman tertutup.
+        </p>
       </div>
 
       <Form {...form}>
@@ -268,15 +313,15 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
+                <Card className="border border-border/60 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-card/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
                         <Package className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold text-slate-900">Profil Produk</CardTitle>
-                        <CardDescription className="text-slate-500 font-medium">Informasi dasar produk ekspor Anda.</CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Profil Produk</CardTitle>
+                        <CardDescription className="text-muted-foreground font-medium">Informasi dasar produk ekspor Anda.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -286,9 +331,9 @@ export default function AssessmentPage() {
                       name="productName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Nama Produk</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Nama Produk</FormLabel>
                           <FormControl>
-                            <Input placeholder="Contoh: Keripik Tempe Organik" className="h-12 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm" {...field} />
+                            <Input placeholder="Contoh: Keripik Tempe Organik" className="h-12 bg-card/80 border-border focus:border-primary transition-all shadow-sm" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -299,10 +344,10 @@ export default function AssessmentPage() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Kategori Produk</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Kategori Produk</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-12 bg-white/80 border-slate-200">
+                              <SelectTrigger className="h-12 bg-card/80 border-border">
                                 <SelectValue placeholder="Pilih kategori" />
                               </SelectTrigger>
                             </FormControl>
@@ -321,11 +366,11 @@ export default function AssessmentPage() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Deskripsi Singkat Produk</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Deskripsi Singkat Produk</FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="Jelaskan keunggulan dan bahan baku utama produk Anda..." 
-                              className="min-h-[120px] bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm resize-none"
+                              className="min-h-[120px] bg-card/80 border-border focus:border-primary transition-all shadow-sm resize-none"
                               {...field} 
                             />
                           </FormControl>
@@ -338,16 +383,16 @@ export default function AssessmentPage() {
                       name="hsCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2 font-bold text-slate-700">
+                          <FormLabel className="flex items-center gap-2 font-bold text-foreground/90">
                             Kode HS (Harmonized System)
-                            <span className="text-slate-300 cursor-help" title="Kode internasional untuk klasifikasi produk. Bisa dikosongkan jika belum tahu.">
+                            <span className="text-muted-foreground/60 cursor-help" title="Kode internasional untuk klasifikasi produk. Bisa dikosongkan jika belum tahu.">
                               <Info className="h-4 w-4" />
                             </span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Opsional (Contoh: 1905.90)" className="h-12 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm" {...field} />
+                            <Input placeholder="Opsional (Contoh: 1905.90)" className="h-12 bg-card/80 border-border focus:border-primary transition-all shadow-sm" {...field} />
                           </FormControl>
-                          <FormDescription className="text-slate-400 italic">Opsional, membantu AI dalam analisis regulasi pasar.</FormDescription>
+                          <FormDescription className="text-muted-foreground/80 italic">Opsional, membantu AI dalam analisis regulasi pasar.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -364,15 +409,15 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
+                <Card className="border border-border/60 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-card/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
                         <Factory className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold text-slate-900">Kapasitas Bisnis</CardTitle>
-                        <CardDescription className="text-slate-500 font-medium">Informasi operasional dan finansial.</CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Kapasitas Bisnis</CardTitle>
+                        <CardDescription className="text-muted-foreground font-medium">Informasi operasional dan finansial.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -383,9 +428,9 @@ export default function AssessmentPage() {
                         name="capacity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-slate-700">Kapasitas Produksi / Bulan</FormLabel>
+                            <FormLabel className="font-bold text-foreground/90">Kapasitas Produksi / Bulan</FormLabel>
                             <FormControl>
-                              <Input type="number" className="h-12 bg-white/80 border-slate-200" {...field} value={field.value as any} />
+                              <Input type="number" className="h-12 bg-card/80 border-border" {...field} value={field.value as any} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -396,10 +441,10 @@ export default function AssessmentPage() {
                         name="capacityUnit"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-slate-700">Unit</FormLabel>
+                            <FormLabel className="font-bold text-foreground/90">Unit</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="h-12 bg-white/80 border-slate-200">
+                                <SelectTrigger className="h-12 bg-card/80 border-border">
                                   <SelectValue placeholder="Pilih unit" />
                                 </SelectTrigger>
                               </FormControl>
@@ -420,13 +465,13 @@ export default function AssessmentPage() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Harga Jual per Unit (IDR)</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Harga Jual per Unit (IDR)</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/80 font-bold">Rp</span>
                               <Input 
                                 type="text" 
-                                className="pl-12 h-14 text-lg font-bold bg-white/80 border-slate-200 shadow-inner" 
+                                className="pl-12 h-14 text-lg font-bold bg-card/80 border-border shadow-inner" 
                                 placeholder="0"
                                 value={field.value ? new Intl.NumberFormat('id-ID').format(Number(field.value)) : ''}
                                 onChange={(e) => {
@@ -444,10 +489,10 @@ export default function AssessmentPage() {
                       control={form.control}
                       name="hasOnlinePresence"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-[1.5rem] border border-white/60 bg-white/60 p-6 shadow-sm">
+                        <FormItem className="flex items-center justify-between rounded-[1.5rem] border border-border/50 bg-card/60 p-6 shadow-sm">
                           <div className="space-y-1">
-                            <FormLabel className="text-lg font-bold text-slate-800">Kehadiran Online</FormLabel>
-                            <FormDescription className="font-medium text-slate-500">
+                            <FormLabel className="text-lg font-bold text-foreground">Kehadiran Online</FormLabel>
+                            <FormDescription className="font-medium text-muted-foreground">
                               Sudah memiliki website atau marketplace aktif.
                             </FormDescription>
                           </div>
@@ -466,10 +511,10 @@ export default function AssessmentPage() {
                       name="exportExperience"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Pengalaman Ekspor Sebelumnya</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Pengalaman Ekspor Sebelumnya</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-12 bg-white/80 border-slate-200">
+                              <SelectTrigger className="h-12 bg-card/80 border-border">
                                 <SelectValue placeholder="Pilih pengalaman" />
                               </SelectTrigger>
                             </FormControl>
@@ -495,15 +540,15 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
+                <Card className="border border-border/60 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-card/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
                         <ShieldCheck className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold text-slate-900">Sertifikasi & Standar</CardTitle>
-                        <CardDescription className="text-slate-500 font-medium">Kelengkapan dokumen dan legalitas.</CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Sertifikasi & Standar</CardTitle>
+                        <CardDescription className="text-muted-foreground font-medium">Kelengkapan dokumen dan legalitas.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -513,7 +558,7 @@ export default function AssessmentPage() {
                       name="certifications"
                       render={() => (
                         <FormItem>
-                          <FormLabel className="text-base font-bold text-slate-700 mb-4 block">Sertifikasi yang Dimiliki</FormLabel>
+                          <FormLabel className="text-base font-bold text-foreground/90 mb-4 block">Sertifikasi yang Dimiliki</FormLabel>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {certs.map((item) => (
                               <FormField
@@ -528,7 +573,7 @@ export default function AssessmentPage() {
                                       className={`flex flex-row items-center space-x-3 space-y-0 rounded-2xl border-2 p-4 transition-all ${
                                         isSelected 
                                           ? 'bg-primary/5 border-primary shadow-sm' 
-                                          : 'bg-white/70 border-slate-100 hover:bg-white hover:border-slate-200 shadow-none!'
+                                          : 'bg-card/70 border-border/70 hover:bg-card hover:border-border shadow-none!'
                                       }`}
                                     >
                                       <FormControl>
@@ -544,12 +589,12 @@ export default function AssessmentPage() {
                                                 )
                                           }}
                                           className={`h-5 w-5 rounded-lg transition-colors ${
-                                            isSelected ? 'border-primary bg-primary text-white' : 'border-slate-200'
+                                            isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
                                           }`}
                                         />
                                       </FormControl>
                                       <FormLabel className={`font-bold cursor-pointer text-sm w-full transition-colors ${
-                                        isSelected ? 'text-primary' : 'text-slate-600'
+                                        isSelected ? 'text-primary' : 'text-muted-foreground'
                                       }`}>
                                         {item}
                                       </FormLabel>
@@ -568,10 +613,10 @@ export default function AssessmentPage() {
                       name="meetsInternationalStandards"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Apakah produk memenuhi standar internasional?</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Apakah produk memenuhi standar internasional?</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="h-12 bg-white/80 border-slate-200">
+                              <SelectTrigger className="h-12 bg-card/80 border-border">
                                 <SelectValue placeholder="Pilih salah satu" />
                               </SelectTrigger>
                             </FormControl>
@@ -597,15 +642,15 @@ export default function AssessmentPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="border border-white/70 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem] overflow-visible">
+                <Card className="border border-border/60 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.55)] bg-card/70 rounded-[2rem] overflow-visible">
                   <CardHeader className="p-8 pb-4">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="p-3 bg-primary/10 rounded-2xl shadow-sm border border-primary/5">
                         <Target className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold text-slate-900">Target Pasar & Laporan</CardTitle>
-                        <CardDescription className="text-slate-500 font-medium">Langkah terakhir menuju pasar global.</CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Target Pasar & Laporan</CardTitle>
+                        <CardDescription className="text-muted-foreground font-medium">Langkah terakhir menuju pasar global.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -615,7 +660,7 @@ export default function AssessmentPage() {
                       name="targetMarkets"
                       render={() => (
                         <FormItem>
-                          <FormLabel className="text-base font-bold text-slate-700 mb-4 block">Negara Tujuan yang Diminati</FormLabel>
+                          <FormLabel className="text-base font-bold text-foreground/90 mb-4 block">Negara Tujuan yang Diminati</FormLabel>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {targetCountries.map((item) => (
                               <FormField
@@ -630,7 +675,7 @@ export default function AssessmentPage() {
                                       className={`flex flex-row items-center space-x-3 space-y-0 rounded-2xl border-2 p-4 transition-all ${
                                         isSelected 
                                           ? 'bg-primary/5 border-primary shadow-sm' 
-                                          : 'bg-white/70 border-slate-100 hover:bg-white hover:border-slate-200 shadow-none!'
+                                          : 'bg-card/70 border-border/70 hover:bg-card hover:border-border shadow-none!'
                                       }`}
                                     >
                                       <FormControl>
@@ -646,12 +691,12 @@ export default function AssessmentPage() {
                                                 )
                                           }}
                                           className={`h-5 w-5 rounded-full transition-colors ${
-                                            isSelected ? 'border-primary bg-primary text-white' : 'border-slate-200'
+                                            isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
                                           }`}
                                         />
                                       </FormControl>
                                       <FormLabel className={`font-bold cursor-pointer w-full text-sm transition-colors ${
-                                        isSelected ? 'text-primary' : 'text-slate-600'
+                                        isSelected ? 'text-primary' : 'text-muted-foreground'
                                       }`}>
                                         {item}
                                       </FormLabel>
@@ -670,11 +715,11 @@ export default function AssessmentPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-slate-700">Email untuk Menerima Laporan</FormLabel>
+                          <FormLabel className="font-bold text-foreground/90">Email untuk Menerima Laporan</FormLabel>
                           <FormControl>
-                            <Input placeholder="anda@perusahaan.com" type="email" className="h-14 text-lg bg-white/80 shadow-inner border-slate-200 rounded-2xl" {...field} />
+                            <Input placeholder="anda@perusahaan.com" type="email" className="h-14 text-lg bg-card/80 shadow-inner border-border rounded-2xl" {...field} />
                           </FormControl>
-                          <FormDescription className="text-slate-400 font-medium">Analisis akan dikirimkan ke email ini.</FormDescription>
+                          <FormDescription className="text-muted-foreground/80 font-medium">Analisis akan dikirimkan ke email ini.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -687,7 +732,7 @@ export default function AssessmentPage() {
 
           <div className="flex justify-between pt-6 pb-20">
             {step > 1 ? (
-              <Button type="button" variant="outline" onClick={prevStep} className="h-14 px-8 rounded-2xl font-bold border-2 hover:bg-white">
+              <Button type="button" variant="outline" onClick={prevStep} className="h-14 px-8 rounded-2xl font-bold border-2 hover:bg-card">
                 <ChevronLeft className="mr-2 h-5 w-5" /> Kembali
               </Button>
             ) : <div />}
