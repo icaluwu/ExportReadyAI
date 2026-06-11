@@ -43,6 +43,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { RoadmapChecklist } from '@/components/roadmap/RoadmapChecklist';
+import { ShareButton } from '@/components/share/ShareButton';
 import dynamic from 'next/dynamic';
 
 const PDFExporter = dynamic(() => import('./PDFExporter'), { 
@@ -161,7 +162,8 @@ export default function ResultsPage() {
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-1 tracking-tight">Laporan Kesiapan Ekspor</h1>
           <p className="text-lg text-slate-600 font-medium">Strategi masuk pasar untuk <span className="text-primary font-bold underline decoration-2 underline-offset-4">{data.product_name}</span></p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <ShareButton assessmentId={id} />
           <PDFExporter 
             reportRef={reportRef} 
             productName={data.product_name} 
