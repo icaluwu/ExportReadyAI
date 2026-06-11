@@ -103,6 +103,13 @@ export default function StudyMaterialPage() {
                   </div>
                 ))}
               </div>
+              <Link
+                href="/sertifikasi"
+                className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/5 p-5 font-bold text-primary transition-colors hover:bg-primary/10"
+              >
+                <span>Lihat Direktori Sertifikasi: biaya, durasi, dan cara mengurusnya</span>
+                <span aria-hidden>→</span>
+              </Link>
             </section>
 
             <section className="space-y-6 bg-slate-900 p-12 rounded-[3rem] text-white my-16 shadow-2xl relative overflow-hidden">

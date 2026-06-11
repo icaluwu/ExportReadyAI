@@ -350,13 +350,20 @@ export default function ResultsPage() {
             </CardHeader>
             <CardContent className="p-8 space-y-4">
               {data.ai_result.gaps.map((gap, idx) => (
-                <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-red-50/50 border border-red-100 group hover:bg-red-50 transition-colors">
-                  <div className="mt-1 h-5 w-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <XCircle className="h-3 w-3 text-red-600" />
+                <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-red-50/50 border border-red-100 group hover:bg-red-50 transition-colors dark:bg-red-950/30 dark:border-red-950 dark:hover:bg-red-950/50">
+                  <div className="mt-1 h-5 w-5 rounded-full bg-red-100 dark:bg-red-950 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <XCircle className="h-3 w-3 text-red-600 dark:text-red-400" />
                   </div>
-                  <span className="text-sm text-slate-800 font-bold leading-snug">{gap}</span>
+                  <span className="text-sm text-foreground/90 font-bold leading-snug">{gap}</span>
                 </div>
               ))}
+              <Link
+                href="/sertifikasi"
+                className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm font-bold text-primary transition-colors hover:bg-primary/10"
+              >
+                <span>Pelajari cara mengurus sertifikasi</span>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
             </CardContent>
           </Card>
 
