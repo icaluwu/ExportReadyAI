@@ -22,6 +22,7 @@ export function Navbar() {
         </Link>
         
         <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          <Link href="/#pricing" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Harga</Link>
           <Link href="/#features" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Fitur</Link>
           <Link href="/#how-it-works" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Cara Kerja</Link>
           <Link href="/materi-belajar" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Materi</Link>

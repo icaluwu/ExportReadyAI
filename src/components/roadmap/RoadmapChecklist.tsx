@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Zap, ShieldCheck, TrendingUp, Award, CheckCircle2, Circle, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 
 interface Roadmap {
   fase1: string[];
@@ -30,9 +31,11 @@ const PHASES: Array<{
 export function RoadmapChecklist({
   assessmentId,
   roadmap,
+  isPremium = false,
 }: {
   assessmentId: string;
   roadmap: Roadmap;
+  isPremium?: boolean;
 }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -130,7 +133,9 @@ export function RoadmapChecklist({
         {PHASES.map((phase) => {
           const items = roadmap[phase.key] || [];
           const phaseDone = items.filter((_, i) => progress[`${phase.key}:${i}`]).length;
-          return (
+          const isLockedPhase = !isPremium && (phase.key === 'fase3' || phase.key === 'fase4');
+
+          const phaseContent = (
             <motion.div
               key={phase.key}
               initial={{ opacity: 0, x: -20 }}
@@ -193,6 +198,16 @@ export function RoadmapChecklist({
               </div>
             </motion.div>
           );
+
+          if (isLockedPhase) {
+            return (
+              <PremiumGate key={phase.key} feature="roadmap_full" isPremium={false} className="min-h-[200px]">
+                {phaseContent}
+              </PremiumGate>
+            );
+          }
+
+          return phaseContent;
         })}
       </div>
     </div>

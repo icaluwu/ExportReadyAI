@@ -41,4 +41,16 @@ if (!process.env.GEMINI_API_KEY?.trim()) {
   )
 }
 
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+  console.warn(
+    '[validate-env] SUPABASE_SERVICE_ROLE_KEY is not set — payment webhooks and admin writes will fail at runtime.',
+  )
+}
+
+if (!process.env.MIDTRANS_SERVER_KEY?.trim() || !process.env.MIDTRANS_CLIENT_KEY?.trim()) {
+  console.warn(
+    '[validate-env] MIDTRANS_SERVER_KEY / MIDTRANS_CLIENT_KEY not set — payment features will fail at runtime.',
+  )
+}
+
 console.log('[validate-env] OK')

@@ -53,6 +53,11 @@ export const metadata: Metadata = {
       "Skor kesiapan ekspor 0-100, rekomendasi 3 negara tujuan, dan roadmap 4 fase untuk UMKM—gratis, 24/7.",
     images: ["/og-image.png"],
   },
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+    shortcut: "/logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -402,8 +402,10 @@ export default function DashboardPage() {
           <Card className="bg-slate-900 text-white border-none rounded-[2rem] p-8 relative overflow-hidden group shadow-2xl">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform" />
             <h3 className="text-xl font-bold mb-3 relative z-10">ExportReady <span className="text-primary font-black italic">PRO</span></h3>
-            <p className="text-muted-foreground/80 text-sm mb-6 relative z-10">Dapatkan akses ke jaringan buyer internasional dan perizinan lebih cepat.</p>
-            <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold h-12 rounded-xl relative z-10">Upgrade Sekarang</Button>
+            <p className="text-muted-foreground/80 text-sm mb-6 relative z-10">Dapatkan akses ke roadmap lengkap, unduh PDF, dan rekomendasi pasar AI.</p>
+            <Button asChild className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold h-12 rounded-xl relative z-10">
+              <Link href="/#pricing">Buka Fitur Lengkap</Link>
+            </Button>
           </Card>
         </div>
       </div>

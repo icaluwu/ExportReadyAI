@@ -18,6 +18,7 @@ import {
   FileSearch
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { PricingSection } from '@/components/pricing/PricingSection';
 
 export default function LandingPage() {
   const features = [
@@ -287,6 +288,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <PricingSection />
 
       {/* FAQ */}
       <section id="faq" className="py-24">

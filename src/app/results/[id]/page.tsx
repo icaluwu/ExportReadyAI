@@ -44,6 +44,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { RoadmapChecklist } from '@/components/roadmap/RoadmapChecklist';
 import { ShareButton } from '@/components/share/ShareButton';
+import { PremiumGate, PremiumCTA } from '@/components/premium/PremiumGate';
 import dynamic from 'next/dynamic';
 
 const PDFExporter = dynamic(() => import('./PDFExporter'), { 
@@ -81,6 +82,7 @@ interface AssessmentResult {
       fase4: string[];
     };
     motivationalNote: string;
+    regulationSources?: string[];
   };
 }
 
@@ -92,7 +94,23 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const res = await fetch('/api/subscription/status');
+        if (res.ok) {
+          const sub = await res.json();
+          setIsPremium(sub.isPremium === true);
+        }
+      } catch {
+        // default free
+      }
+    }
+    fetchSubscription();
+  }, []);
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
@@ -164,11 +182,15 @@ export default function ResultsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <ShareButton assessmentId={id} />
-          <PDFExporter 
-            reportRef={reportRef} 
-            productName={data.product_name} 
-            setIsExporting={setIsExporting}
-          />
+          {isPremium ? (
+            <PDFExporter 
+              reportRef={reportRef} 
+              productName={data.product_name} 
+              setIsExporting={setIsExporting}
+            />
+          ) : (
+            <PremiumCTA className="h-14 px-8 rounded-2xl font-black border-2" />
+          )}
           <Button 
             onClick={() => router.push('/assessment')}
             className="bg-primary hover:scale-105 transition-all h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 gap-2"
@@ -316,25 +338,47 @@ export default function ResultsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {data.ai_result.topCountries.map((country, idx) => (
-              <motion.div key={idx} whileHover={{ y: -10 }} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.1 }}>
-                <Card className="h-full border-none shadow-2xl glass rounded-[2.5rem] overflow-hidden group">
-                  <div className={`h-3 w-full ${country.demandLevel === 'Tinggi' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <CardContent className="p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="text-6xl group-hover:scale-110 group-hover:-rotate-6 transition-transform filter drop-shadow-lg">{country.flag}</div>
-                      <Badge className={`px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest border-none ${
-                         country.demandLevel === 'Tinggi' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {country.demandLevel} Demand
-                      </Badge>
+            {data.ai_result.topCountries.map((country, idx) => {
+              const card = (
+                <motion.div key={idx} whileHover={{ y: -10 }} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.1 }}>
+                  <Card className="h-full border-none shadow-2xl glass rounded-[2.5rem] overflow-hidden group">
+                    <div className={`h-3 w-full ${country.demandLevel === 'Tinggi' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <CardContent className="p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="text-6xl group-hover:scale-110 group-hover:-rotate-6 transition-transform filter drop-shadow-lg">{country.flag}</div>
+                        <Badge className={`px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest border-none ${
+                           country.demandLevel === 'Tinggi' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {country.demandLevel} Demand
+                        </Badge>
+                      </div>
+                      <h3 className="text-2xl font-black mb-4 text-slate-900">{country.country}</h3>
+                      <p className="text-slate-500 leading-relaxed font-medium text-sm">{country.reason}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+
+              if (idx === 0 || isPremium) return card;
+
+              if (idx === 1) {
+                return (
+                  <PremiumGate key={idx} feature="market_recommendations" isPremium={false} className="min-h-[280px]">
+                    <div className="grid grid-cols-1 gap-8">
+                      {data.ai_result.topCountries.slice(1).map((c, i) => (
+                        <Card key={i} className="h-full border-none shadow-2xl glass rounded-[2.5rem] overflow-hidden">
+                          <CardContent className="p-8">
+                            <h3 className="text-2xl font-black mb-4 text-slate-900">{c.country}</h3>
+                            <p className="text-slate-500 text-sm">{c.reason}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                    <h3 className="text-2xl font-black mb-4 text-slate-900">{country.country}</h3>
-                    <p className="text-slate-500 leading-relaxed font-medium text-sm">{country.reason}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                  </PremiumGate>
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
 
@@ -377,10 +421,28 @@ export default function ResultsPage() {
               <CardDescription className="text-slate-500 font-medium">Panduan langkah demi langkah menuju ekspor perdana.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 pt-12">
-              <RoadmapChecklist assessmentId={id} roadmap={data.ai_result.roadmap} />
+              <RoadmapChecklist assessmentId={id} roadmap={data.ai_result.roadmap} isPremium={isPremium} />
             </CardContent>
           </Card>
         </div>
+
+        {data.ai_result.regulationSources && data.ai_result.regulationSources.length > 0 && (
+          <Card className="border-none shadow-lg glass rounded-[2rem]">
+            <CardContent className="p-6">
+              <h3 className="text-sm font-black text-muted-foreground uppercase tracking-widest mb-3">
+                Sumber Regulasi yang Digunakan
+              </h3>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground font-medium mb-4">
+                {data.ai_result.regulationSources.map((src, i) => (
+                  <li key={i}>{src}</li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground italic">
+                Informasi ini bersifat panduan umum, bukan nasihat hukum resmi.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* CTA Section - Non-printable */}

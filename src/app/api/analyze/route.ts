@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { model } from '@/lib/gemini';
 import { calculateReadinessScore } from '@/lib/scoring';
+import {
+  searchRegulations,
+  formatRegulationContext,
+  extractSourceTitles,
+} from '@/lib/rag';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,11 +22,21 @@ export async function POST(req: NextRequest) {
       exportExperience: data.exportExperience,
     });
 
+    // RAG: retrieve relevant regulation chunks
+    const ragQuery = `Produk: ${data.productName}, kategori: ${data.category}, target pasar: ${(data.targetMarkets || []).join(', ')}`;
+    const regulationChunks = await searchRegulations(ragQuery, 5);
+    const regulationContext = formatRegulationContext(regulationChunks);
+    const regulationSources = extractSourceTitles(regulationChunks);
+
     // Gemini Prompt
-    const systemPrompt = `Kamu adalah konsultan ekspor senior Indonesia dengan pengalaman 20 tahun. 
+    let systemPrompt = `Kamu adalah konsultan ekspor senior Indonesia dengan pengalaman 20 tahun. 
     Berikan analisis ekspor dalam Bahasa Indonesia yang profesional namun 
     mudah dipahami oleh pelaku UMKM. Selalu berikan rekomendasi yang 
     spesifik, actionable, dan realistis.`;
+
+    if (regulationContext) {
+      systemPrompt += `\n\n${regulationContext}`;
+    }
 
     const userPrompt = `Berdasarkan data UMKM berikut:
     - Produk: ${data.productName} (kategori: ${data.category})
@@ -66,6 +80,10 @@ export async function POST(req: NextRequest) {
       if (!aiResult) {
         console.error('Gemini returned invalid format:', text);
         throw new Error('Format respon AI tidak valid');
+      }
+
+      if (regulationSources.length > 0) {
+        aiResult.regulationSources = regulationSources;
       }
     } catch (aiError) {
       console.error('Gemini API Error Detail:', aiError);
