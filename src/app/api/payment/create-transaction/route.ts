@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { plan_id } = body;
+    const { plan_id, payment_method } = body;
 
     if (!plan_id) {
       return NextResponse.json(
@@ -60,26 +60,43 @@ export async function POST(req: NextRequest) {
     const customerPhone =
       (user.user_metadata?.phone as string) || '08123456789';
 
-    const snap = getSnapClient();
-    const transaction = await snap.createTransaction({
-      transaction_details: {
-        order_id: orderId,
-        gross_amount: grossAmount,
-      },
-      customer_details: {
-        first_name: customerName,
-        email: user.email || '',
-        phone: customerPhone,
-      },
-      item_details: [
-        {
-          id: plan.id,
-          price: grossAmount,
-          quantity: 1,
-          name: `ExportReady ${plan.name === 'premium_monthly' ? 'Premium Bulanan' : 'Premium Tahunan'}`,
-        },
-      ],
-    });
+    const isMidtransConfigured =
+      !!process.env.MIDTRANS_SERVER_KEY &&
+      !!process.env.MIDTRANS_CLIENT_KEY;
+
+    let transactionToken: string | null = null;
+    let transactionRedirectUrl: string | null = null;
+    let isManual = payment_method === 'manual' || !isMidtransConfigured;
+
+    if (!isManual) {
+      try {
+        const snap = getSnapClient();
+        const transaction = await snap.createTransaction({
+          transaction_details: {
+            order_id: orderId,
+            gross_amount: grossAmount,
+          },
+          customer_details: {
+            first_name: customerName,
+            email: user.email || '',
+            phone: customerPhone,
+          },
+          item_details: [
+            {
+              id: plan.id,
+              price: grossAmount,
+              quantity: 1,
+              name: `ExportReady ${plan.name === 'premium_monthly' ? 'Premium Bulanan' : 'Premium Tahunan'}`,
+            },
+          ],
+        });
+        transactionToken = transaction.token;
+        transactionRedirectUrl = transaction.redirect_url;
+      } catch (err) {
+        console.warn('Gagal menginisialisasi Midtrans, beralih ke pembayaran manual:', err);
+        isManual = true;
+      }
+    }
 
     const { error: insertError } = await admin.from('payment_transactions').insert({
       user_id: user.id,
@@ -87,6 +104,7 @@ export async function POST(req: NextRequest) {
       order_id: orderId,
       gross_amount: grossAmount,
       status: 'pending',
+      payment_type: isManual ? 'manual_bank_transfer' : null,
     });
 
     if (insertError) {
@@ -98,9 +116,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      token: transaction.token,
-      redirect_url: transaction.redirect_url,
+      token: transactionToken,
+      redirect_url: transactionRedirectUrl,
       order_id: orderId,
+      manual: isManual,
     });
   } catch (err) {
     console.error('create-transaction error:', err);

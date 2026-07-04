@@ -105,8 +105,8 @@ $$;
 -- Seed subscription plans
 INSERT INTO subscription_plans (name, price_idr, features, is_active) VALUES
   ('free', 0, '["assessment_basic"]'::jsonb, true),
-  ('premium_monthly', 99000, '["roadmap_full","export_pdf","market_recommendations"]'::jsonb, true),
-  ('premium_yearly', 990000, '["roadmap_full","export_pdf","market_recommendations"]'::jsonb, true);
+  ('premium_monthly', 40000, '["roadmap_full","export_pdf","market_recommendations"]'::jsonb, true),
+  ('premium_yearly', 399000, '["roadmap_full","export_pdf","market_recommendations"]'::jsonb, true);
 
 -- Row Level Security
 ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
