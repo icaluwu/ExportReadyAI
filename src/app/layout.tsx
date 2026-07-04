@@ -54,9 +54,9 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-    shortcut: "/logo.png",
+    icon: "/logo.ico",
+    apple: "/logo.ico",
+    shortcut: "/logo.ico",
   },
 };
 
@@ -67,7 +67,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body 
+      <body
         className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col bg-background`}
         suppressHydrationWarning
       >
