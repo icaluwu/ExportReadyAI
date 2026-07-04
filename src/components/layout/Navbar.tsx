@@ -22,6 +22,10 @@ export function Navbar() {
         </Link>
         
         <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          <Link href="/blog" className="relative text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px] flex items-center gap-1.5 group">
+            <span>Blog</span>
+            <span className="absolute -top-2 -right-5 text-[9px] font-black bg-emerald-500 text-white px-1.5 py-0.5 rounded-full leading-none group-hover:bg-primary transition-colors">SEO</span>
+          </Link>
           <Link href="/#pricing" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Harga</Link>
           <Link href="/#features" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Fitur</Link>
           <Link href="/#how-it-works" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Cara Kerja</Link>

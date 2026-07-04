@@ -66,7 +66,7 @@ function LoginInner() {
     }
     setLoading(true);
     setEmailForResend(values.email);
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
@@ -76,19 +76,7 @@ function LoginInner() {
       setLoading(false);
     } else {
       toast.success('Login berhasil!');
-      // Check account type to redirect to appropriate dashboard
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('account_type')
-          .eq('id', data.user.id)
-          .single();
-
-        const isEditor = profile?.account_type === 'editor' || profile?.account_type === 'admin';
-        router.push(isEditor ? '/editor/dashboard' : '/dashboard');
-      } catch {
-        router.push('/dashboard');
-      }
+      router.push('/dashboard');
       router.refresh();
     }
   }
