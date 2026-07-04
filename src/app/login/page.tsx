@@ -66,7 +66,7 @@ function LoginInner() {
     }
     setLoading(true);
     setEmailForResend(values.email);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
@@ -76,7 +76,19 @@ function LoginInner() {
       setLoading(false);
     } else {
       toast.success('Login berhasil!');
-      router.push('/dashboard');
+      // Check account type to redirect to appropriate dashboard
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('account_type')
+          .eq('id', data.user.id)
+          .single();
+
+        const isEditor = profile?.account_type === 'editor' || profile?.account_type === 'admin';
+        router.push(isEditor ? '/editor/dashboard' : '/dashboard');
+      } catch {
+        router.push('/dashboard');
+      }
       router.refresh();
     }
   }
@@ -114,9 +126,9 @@ function LoginInner() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <Card className="border border-white/70 shadow-[0_28px_60px_-38px_rgba(15,23,42,0.55)] bg-white/70 rounded-[2rem]">
-          <CardHeader className="space-y-1 text-center pb-8 border-b border-white/60 bg-white/40">
-            <CardTitle className="text-2xl font-black tracking-tight text-slate-900">Selamat Datang Kembali</CardTitle>
+        <Card className="border border-white/70 dark:border-white/10 shadow-[0_28px_60px_-38px_rgba(15,23,42,0.55)] dark:shadow-[0_28px_60px_-38px_rgba(0,0,0,0.6)] bg-white/70 dark:bg-slate-800/80 dark:backdrop-blur-md rounded-[2rem]">
+          <CardHeader className="space-y-1 text-center pb-8 border-b border-white/60 dark:border-white/10 bg-white/40 dark:bg-slate-700/30">
+            <CardTitle className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-50">Selamat Datang Kembali</CardTitle>
             <CardDescription>Masuk ke akun ExportReady AI Anda</CardDescription>
           </CardHeader>
           <CardContent className="pt-8 px-8">
@@ -130,10 +142,10 @@ function LoginInner() {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-400" />
                           <Input 
                             placeholder="nama@email.com" 
-                            className="pl-10 h-11 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm"
+                            className="pl-10 h-11 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-primary dark:focus:border-primary transition-all shadow-sm"
                             {...field} 
                           />
                         </div>
@@ -155,10 +167,10 @@ function LoginInner() {
                       </div>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-400" />
                           <Input 
                             type="password" 
-                            className="pl-10 h-11 bg-white/80 border-slate-200 focus:border-primary transition-all shadow-sm"
+                            className="pl-10 h-11 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-primary dark:focus:border-primary transition-all shadow-sm"
                             {...field} 
                           />
                         </div>
@@ -183,7 +195,7 @@ function LoginInner() {
                   type="button"
                   variant="outline"
                   onClick={resendVerification}
-                  className="w-full h-11 font-black border-2 bg-white/60 hover:bg-white"
+                  className="w-full h-11 font-black border-2 bg-white/60 hover:bg-white dark:bg-slate-700/40 dark:border-slate-500 dark:text-slate-200 dark:hover:bg-slate-600/60"
                   disabled={loading}
                 >
                   Kirim Ulang Email Verifikasi
@@ -191,7 +203,7 @@ function LoginInner() {
               </form>
             </Form>
             
-            <div className="mt-8 pt-6 border-t text-center text-sm text-slate-500">
+            <div className="mt-8 pt-6 border-t dark:border-slate-700 text-center text-sm text-slate-500 dark:text-slate-400">
               Belum punya akun?{' '}
               <Link href="/register" className="font-black text-primary hover:underline underline-offset-4">
                 Daftar Sekarang

@@ -1,246 +1,275 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Mail, 
-  Lock, 
-  ChevronLeft, 
-  Save, 
-  Loader2, 
+import { motion } from 'framer-motion';
+import {
+  Save,
+  Loader2,
+  User,
+  AtSign,
+  FileText,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Github,
+  Globe,
+  ArrowLeft,
+  Camera,
   CheckCircle2,
-  AlertCircle,
-  Eye,
-  EyeOff
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
-export default function EditProfilePage() {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
+export default function ProfileEditPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [saved, setSaved] = useState(false);
+
+  const [form, setForm] = useState({
+    fullName: '',
+    username: '',
+    bio: '',
+    avatarUrl: '',
+    phoneNumber: '',
+    socialInstagram: '',
+    socialTwitter: '',
+    socialLinkedin: '',
+    socialGithub: '',
+    socialWebsite: '',
+  });
 
   useEffect(() => {
-    async function getUser() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login');
-        return;
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/login'); return; }
+      setUser(user);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setForm({
+          fullName: profile.full_name || user.user_metadata?.full_name || '',
+          username: profile.username || '',
+          bio: profile.bio || '',
+          avatarUrl: profile.avatar_url || '',
+          phoneNumber: profile.phone_number || '',
+          socialInstagram: profile.social_instagram || '',
+          socialTwitter: profile.social_twitter || '',
+          socialLinkedin: profile.social_linkedin || '',
+          socialGithub: profile.social_github || '',
+          socialWebsite: profile.social_website || '',
+        });
+      } else {
+        setForm(f => ({ ...f, fullName: user.user_metadata?.full_name || '' }));
       }
-      setUser(session.user);
-      setFullName(session.user.user_metadata?.full_name || '');
-      setEmail(session.user.email || '');
-      setLoading(false);
+      setFetching(false);
     }
-    getUser();
+    load();
   }, [router]);
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-
-    try {
-      const updates: any = {
-        data: { full_name: fullName }
-      };
-
-      // Email update
-      if (email !== user.email) {
-        const { error: emailError } = await supabase.auth.updateUser(
-          { email },
-          { emailRedirectTo: `${window.location.origin}/profile` }
-        );
-        if (emailError) throw emailError;
-        toast.success('Permintaan konfirmasi telah dikirim ke email baru dan lama Anda. Silakan cek kotak masuk keduanya.');
-      }
-
-      // Password update
-      if (password) {
-        if (password !== confirmPassword) {
-          toast.error('Password tidak cocok');
-          setSaving(false);
-          return;
-        }
-        const { error: passwordError } = await supabase.auth.updateUser({ password });
-        if (passwordError) throw passwordError;
-      }
-
-      // Metadata update (Name)
-      const { error: metadataError } = await supabase.auth.updateUser(updates);
-      if (metadataError) throw metadataError;
-
-      toast.success('Profil berhasil diperbaharui');
-      router.refresh();
-      setTimeout(() => router.push('/profile'), 1500);
-    } catch (error: any) {
-      toast.error(error.message || 'Gagal memperbaharui profil');
-    } finally {
-      setSaving(false);
+  async function handleSave() {
+    if (!form.fullName.trim()) { toast.error('Nama lengkap wajib diisi.'); return; }
+    if (form.username && !/^[a-z0-9_]{3,20}$/.test(form.username)) {
+      toast.error('Username hanya boleh huruf kecil, angka, dan underscore (3-20 karakter).');
+      return;
     }
-  };
+    setLoading(true);
 
-  if (loading) {
+    const { error } = await supabase.from('profiles').upsert({
+      id: user.id,
+      full_name: form.fullName,
+      username: form.username || null,
+      bio: form.bio || null,
+      avatar_url: form.avatarUrl || null,
+      phone_number: form.phoneNumber || null,
+      social_instagram: form.socialInstagram || null,
+      social_twitter: form.socialTwitter || null,
+      social_linkedin: form.socialLinkedin || null,
+      social_github: form.socialGithub || null,
+      social_website: form.socialWebsite || null,
+    });
+
+    setLoading(false);
+    if (error) {
+      if (error.message.includes('unique')) {
+        toast.error('Username sudah digunakan. Pilih username lain.');
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+
+    setSaved(true);
+    toast.success('Profil berhasil disimpan!');
+    setTimeout(() => setSaved(false), 3000);
+  }
+
+  const SOCIAL_FIELDS = [
+    { key: 'socialInstagram', icon: Instagram, label: 'Instagram', placeholder: 'https://instagram.com/username', color: 'text-pink-500' },
+    { key: 'socialTwitter', icon: Twitter, label: 'X / Twitter', placeholder: 'https://x.com/username', color: 'text-sky-500' },
+    { key: 'socialLinkedin', icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username', color: 'text-blue-700' },
+    { key: 'socialGithub', icon: Github, label: 'GitHub', placeholder: 'https://github.com/username', color: 'text-slate-700 dark:text-slate-300' },
+    { key: 'socialWebsite', icon: Globe, label: 'Website / Portfolio', placeholder: 'https://yourwebsite.com', color: 'text-emerald-600' },
+  ];
+
+  if (fetching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="container relative mx-auto px-4 py-16 max-w-2xl min-h-screen">
-      {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] -z-10" />
+    <div className="container relative mx-auto px-4 py-12 max-w-2xl min-h-screen">
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/8 rounded-full blur-3xl -z-10" />
+      <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl -z-10" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <Link 
-          href="/profile" 
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-primary transition-colors mb-8 group"
-        >
-          <div className="p-2 rounded-full glass group-hover:bg-primary group-hover:text-white transition-all">
-            <ChevronLeft className="h-4 w-4" />
-          </div>
-          Kembali ke Profil
-        </Link>
+      <Link href="/profile" className="inline-flex items-center gap-2 text-sm font-black text-slate-400 hover:text-primary transition-colors mb-8">
+        <ArrowLeft className="h-4 w-4" /> Kembali ke Profil
+      </Link>
 
-        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Edit Profil</h1>
-        <p className="text-slate-500 font-medium mb-12">Perbaharui informasi akun dan keamanan Anda.</p>
-
-        <form onSubmit={handleUpdateProfile} className="space-y-8">
-          <Card className="border-none shadow-2xl glass rounded-[2.5rem] overflow-hidden p-8 px-10">
-            <CardHeader className="p-0 mb-8 px-2">
-              <CardTitle className="text-xl font-bold flex items-center gap-3">
-                <User className="h-5 w-5 text-primary" /> Informasi Dasar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Nama Lengkap</Label>
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
-                  <Input 
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-14 pl-12 rounded-2xl border-none bg-slate-50/50 focus:bg-white transition-all font-bold text-slate-900 shadow-inner"
-                    placeholder="Contoh: John Doe"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Alamat Email</Label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
-                  <Input 
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-14 pl-12 rounded-2xl border-none bg-slate-50/50 focus:bg-white transition-all font-bold text-slate-900 shadow-inner"
-                    placeholder="name@example.com"
-                  />
-                </div>
-                {email !== user?.email && (
-                  <div className="bg-amber-50 rounded-xl p-4 mt-4 space-y-2 border border-amber-100">
-                    <p className="text-xs text-amber-600 font-bold flex items-center gap-1.5 leading-tight">
-                      <AlertCircle className="h-4 w-4 shrink-0" /> PENTING: Untuk mengubah email, Anda harus mengonfirmasi link yang dikirimkan ke KEDUA email (email lama dan email baru).
-                    </p>
-                    <p className="text-[10px] text-amber-500 font-medium">Link akan kedaluwarsa jika tidak dikonfirmasi segera.</p>
-                  </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        {/* Avatar Section */}
+        <Card className="border border-white/70 dark:border-white/10 shadow-xl bg-white/70 dark:bg-slate-800/80 backdrop-blur-md rounded-[2rem]">
+          <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-700">
+            <CardTitle className="text-lg font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <Camera className="h-5 w-5 text-primary" /> Foto Profil
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-6">
+              <div className="h-20 w-20 rounded-[1.4rem] overflow-hidden bg-primary/10 flex items-center justify-center shrink-0 shadow-lg">
+                {form.avatarUrl ? (
+                  <img src={form.avatarUrl} alt="Preview" className="h-full w-full object-cover" onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />
+                ) : (
+                  <span className="text-primary text-3xl font-black">{(form.fullName || '?')[0].toUpperCase()}</span>
                 )}
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex-1">
+                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">URL Foto Profil</label>
+                <Input
+                  value={form.avatarUrl}
+                  onChange={e => setForm(f => ({ ...f, avatarUrl: e.target.value }))}
+                  placeholder="https://... (URL publik gambar)"
+                  className="bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-sm"
+                />
+                <p className="text-[10px] text-slate-400 mt-1.5 font-medium">Ukuran ideal: 1:1 (square), minimal 200x200px</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="border-none shadow-2xl glass rounded-[2.5rem] overflow-hidden p-8 px-10">
-            <CardHeader className="p-0 mb-8 px-2">
-              <CardTitle className="text-xl font-bold flex items-center gap-3">
-                <Lock className="h-5 w-5 text-primary" /> Keamanan Akun
-              </CardTitle>
-              <CardDescription className="text-slate-500 font-medium">Kosongkan jika tidak ingin mengubah password.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="pass" className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Password Baru</Label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-primary transition-colors" />
-                  <Input 
-                    id="pass"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 pl-12 pr-12 rounded-2xl border-none bg-slate-50/50 focus:bg-white transition-all font-bold text-slate-900 shadow-inner"
-                    placeholder="••••••••"
+        {/* Basic Info */}
+        <Card className="border border-white/70 dark:border-white/10 shadow-xl bg-white/70 dark:bg-slate-800/80 backdrop-blur-md rounded-[2rem]">
+          <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-700">
+            <CardTitle className="text-lg font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" /> Informasi Dasar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-5">
+            <div>
+              <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
+                Nama Lengkap <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  value={form.fullName}
+                  onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                  placeholder="Nama lengkap Anda"
+                  className="pl-10 h-11 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Username</label>
+              <div className="relative">
+                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  value={form.username}
+                  onChange={e => setForm(f => ({ ...f, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                  placeholder="username_anda"
+                  className="pl-10 h-11 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 font-mono"
+                  maxLength={20}
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1.5 font-medium">Hanya huruf kecil, angka, underscore. 3-20 karakter.</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Bio Singkat</label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                <Textarea
+                  value={form.bio}
+                  onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+                  placeholder="Ceritakan sedikit tentang Anda..."
+                  className="pl-10 resize-none h-24 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600"
+                  maxLength={200}
+                />
+              </div>
+              <p className="text-right text-[10px] text-slate-300 mt-1">{form.bio.length}/200</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Social Media */}
+        <Card className="border border-white/70 dark:border-white/10 shadow-xl bg-white/70 dark:bg-slate-800/80 backdrop-blur-md rounded-[2rem]">
+          <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-700">
+            <CardTitle className="text-lg font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" /> Sosial Media & Links
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            {SOCIAL_FIELDS.map(({ key, icon: Icon, label, placeholder, color }) => (
+              <div key={key}>
+                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{label}</label>
+                <div className="relative">
+                  <Icon className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${color}`} />
+                  <Input
+                    value={(form as any)[key]}
+                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="pl-10 h-11 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-sm"
                   />
-                  <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
                 </div>
               </div>
+            ))}
+          </CardContent>
+        </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirm" className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Konfirmasi Password Baru</Label>
-                <div className="relative group">
-                  <CheckCircle2 className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors ${
-                    confirmPassword && password === confirmPassword ? 'text-emerald-500' : 'text-slate-300 group-focus-within:text-primary'
-                  }`} />
-                  <Input 
-                    id="confirm"
-                    type={showPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="h-14 pl-12 rounded-2xl border-none bg-slate-50/50 focus:bg-white transition-all font-bold text-slate-900 shadow-inner"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button 
-              type="submit" 
-              disabled={saving}
-              className="flex-grow bg-primary h-16 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all gap-2"
-            >
-              {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
-              Simpan Perubahan
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="h-16 px-10 rounded-2xl border-2 font-bold text-slate-600"
-              onClick={() => router.push('/profile')}
-            >
-              Batalkan
-            </Button>
-          </div>
-        </form>
+        {/* Save Button */}
+        <Button
+          onClick={handleSave}
+          disabled={loading}
+          className={`w-full h-12 font-black text-base rounded-2xl shadow-lg transition-all active:scale-[0.98] ${
+            saved
+              ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
+              : 'bg-primary hover:bg-primary/95 shadow-primary/20'
+          }`}
+        >
+          {loading ? (
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          ) : saved ? (
+            <><CheckCircle2 className="mr-2 h-5 w-5" /> Tersimpan!</>
+          ) : (
+            <><Save className="mr-2 h-5 w-5" /> Simpan Perubahan</>
+          )}
+        </Button>
       </motion.div>
     </div>
   );

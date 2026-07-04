@@ -46,13 +46,19 @@ export async function middleware(request: NextRequest) {
   // PROTECTED ROUTES: Redirect to login if unauthenticated
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith('/profile') ||
-    request.nextUrl.pathname.startsWith('/dashboard')
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/editor') ||
+    request.nextUrl.pathname.startsWith('/editor-onboarding')
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
+
+  // EDITOR ROUTES: Additional check — only approved editors can access /editor/*
+  // The editor layout.tsx handles the final check by reading profiles table
+  // This middleware only ensures the user is authenticated
 
   return supabaseResponse
 }

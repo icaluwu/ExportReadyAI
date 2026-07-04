@@ -9,9 +9,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
+        // Keep private areas out of search index
+        disallow: ['/editor/', '/editor-onboarding', '/profile/', '/dashboard/', '/results/', '/payment/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
 }
-

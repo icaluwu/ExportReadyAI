@@ -25,9 +25,15 @@ export const metadata: Metadata = {
     "kesiapan ekspor",
     "market intelligence",
     "roadmap ekspor",
+    "blog ekspor",
+    "panduan ekspor UMKM",
   ],
   alternates: {
     canonical: "/",
+  },
+  // Google Search Console verification
+  verification: {
+    google: '0_ciBwlJgJ3loxrpfysohV-6WTQz2Ydbis51O70VX6c',
   },
   openGraph: {
     type: "website",
