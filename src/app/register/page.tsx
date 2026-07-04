@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, getFriendlyAuthErrorMessage } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { getSiteUrl } from '@/lib/site-url';
 
@@ -60,7 +60,7 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(getFriendlyAuthErrorMessage(error));
       setLoading(false);
     } else {
       toast.success('Pendaftaran berhasil! Silakan cek email Anda (inbox/spam) untuk verifikasi.');
@@ -79,7 +79,7 @@ export default function RegisterPage() {
       options: { emailRedirectTo: `${getSiteUrl()}/auth/callback` },
     })
     if (error) {
-      toast.error(error.message)
+      toast.error(getFriendlyAuthErrorMessage(error))
       return
     }
     toast.success('Email verifikasi sudah dikirim ulang. Cek inbox/spam.')

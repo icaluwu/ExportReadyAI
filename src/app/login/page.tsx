@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
-import { isSupabaseConfigured, supabase, SUPABASE_CONFIG_ERROR } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase, SUPABASE_CONFIG_ERROR, getFriendlyAuthErrorMessage } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { getSiteUrl } from '@/lib/site-url';
 
@@ -72,7 +72,7 @@ function LoginInner() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(getFriendlyAuthErrorMessage(error));
       setLoading(false);
     } else {
       toast.success('Login berhasil!');
@@ -98,7 +98,7 @@ function LoginInner() {
     })
 
     if (error) {
-      toast.error(error.message)
+      toast.error(getFriendlyAuthErrorMessage(error))
       return
     }
     toast.success('Email verifikasi sudah dikirim ulang. Cek inbox/spam.')
