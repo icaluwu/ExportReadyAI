@@ -417,7 +417,9 @@ export default function AdminDashboardPage() {
                               <td className="px-6 py-4 text-right">
                                 <Select
                                   defaultValue={userItem.account_type}
-                                  onValueChange={(val: 'user' | 'editor' | 'admin') => updateUserRole(userItem.id, val)}
+                                  onValueChange={(val: 'user' | 'editor' | 'admin' | null) => {
+                                    if (val) updateUserRole(userItem.id, val);
+                                  }}
                                   disabled={userItem.email === 'teukuvaickal@export-ready-ai.vercel.app'}
                                 >
                                   <SelectTrigger className="w-28 ml-auto h-8 text-xs font-bold bg-slate-50 dark:bg-slate-800 border-none">
@@ -500,7 +502,9 @@ export default function AdminDashboardPage() {
                               <td className="px-6 py-4">
                                 <Select
                                   defaultValue={postItem.status}
-                                  onValueChange={(val: 'draft' | 'published' | 'archived') => updatePostStatus(postItem.id, val)}
+                                  onValueChange={(val: 'draft' | 'published' | 'archived' | null) => {
+                                    if (val) updatePostStatus(postItem.id, val);
+                                  }}
                                 >
                                   <SelectTrigger className="w-28 h-8 text-xs font-bold bg-slate-50 dark:bg-slate-800 border-none">
                                     <SelectValue />
