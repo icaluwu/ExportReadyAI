@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck,
-  Phone,
   CheckCircle2,
   ArrowRight,
   Loader2,
@@ -13,16 +12,17 @@ import {
   AlertTriangle,
   PenLine,
   Star,
+  Mail,
 } from 'lucide-react';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
 const STEPS = [
-  { id: 1, label: 'Disclaimer', icon: FileText },
-  { id: 2, label: 'Verifikasi HP', icon: Phone },
+  { id: 1, label: 'Verifikasi Email', icon: Mail },
+  { id: 2, label: 'Disclaimer', icon: FileText },
   { id: 3, label: 'Selesai', icon: CheckCircle2 },
 ];
 
@@ -30,10 +30,7 @@ export default function EditorOnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,76 +40,85 @@ export default function EditorOnboardingPage() {
         return;
       }
       setUser(user);
-      // Pre-fill phone if already registered
-      if (user.user_metadata?.phone_number) {
-        setPhone(user.user_metadata.phone_number);
-      }
+
+      // If user is already editor or admin, redirect to editor dashboard
+      supabase.from('profiles')
+        .select('account_type')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.account_type === 'editor' || data?.account_type === 'admin') {
+            router.push('/editor/dashboard');
+          } else {
+            // Check if email is already verified
+            if (user.email_confirmed_at) {
+              setStep(2); // Skip verification step, go directly to disclaimer
+            } else {
+              setStep(1); // Show verification step
+            }
+          }
+        });
     });
   }, [router]);
 
-  async function handleDisclaimerAgree() {
-    if (!agreed) {
-      toast.error('Anda harus menyetujui disclaimer terlebih dahulu.');
-      return;
-    }
-    setStep(2);
-  }
-
-  async function sendOtp() {
-    if (!phone || phone.length < 10) {
-      toast.error('Masukkan nomor HP yang valid.');
-      return;
-    }
+  async function checkVerification() {
     setLoading(true);
-    // In production, integrate with Twilio/WhatsApp API here
-    // For MVP: simulate OTP sent
-    await new Promise(r => setTimeout(r, 1200));
-    setOtpSent(true);
-    setLoading(false);
-    toast.success(`Kode OTP telah dikirim ke ${phone} (simulasi MVP)`);
-  }
+    // Refresh session to get updated user metadata
+    const { data: { user: updatedUser }, error } = await supabase.auth.getUser();
 
-  async function verifyOtp() {
-    if (!otp || otp.length < 4) {
-      toast.error('Masukkan kode OTP yang dikirimkan.');
-      return;
-    }
-    setLoading(true);
-
-    // MVP: accept any 6-digit OTP as valid (replace with real verification)
-    const isValid = otp === '123456' || otp.length === 6;
-
-    if (!isValid) {
-      toast.error('Kode OTP tidak valid. Coba lagi.');
+    if (error) {
+      toast.error('Gagal mengambil data user. Silakan coba lagi.');
       setLoading(false);
       return;
     }
 
+    if (updatedUser?.email_confirmed_at) {
+      setUser(updatedUser);
+      toast.success('Email Anda berhasil diverifikasi!');
+      setStep(2);
+    } else {
+      toast.error('Email Anda belum diverifikasi. Silakan cek inbox/spam email Anda dan klik tautan verifikasi.');
+    }
+    setLoading(false);
+  }
+
+  async function resendVerificationEmail() {
+    if (!user?.email) return;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message || 'Gagal mengirim ulang email verifikasi.');
+    } else {
+      toast.success('Email verifikasi baru telah dikirim! Silakan cek inbox/spam Anda.');
+    }
+  }
+
+  async function handleDisclaimerAgree() {
+    if (!agreed || !user) {
+      toast.error('Anda harus menyetujui disclaimer terlebih dahulu.');
+      return;
+    }
+    setLoading(true);
     try {
-      // Update profile with phone number
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        phone_number: phone,
-        phone_verified: true,
-      });
+      // Update profile to editor role
+      const { error } = await supabase
+        .from('profiles')
+        .update({ account_type: 'editor' })
+        .eq('id', user.id);
 
-      // Create/update editor application
-      const { error: appError } = await supabase
-        .from('editor_applications')
-        .upsert({
-          user_id: user.id,
-          status: 'pending',
-          disclaimer_accepted: true,
-          disclaimer_accepted_at: new Date().toISOString(),
-          phone_number: phone,
-          phone_verified: true,
-        }, { onConflict: 'user_id' });
-
-      if (appError) throw appError;
+      if (error) throw error;
 
       setStep(3);
-    } catch (err: any) {
-      toast.error(err.message || 'Terjadi kesalahan. Coba lagi.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan. Coba lagi.';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -154,10 +160,70 @@ export default function EditorOnboardingPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          {/* ─── STEP 1: DISCLAIMER ─── */}
+          {/* ─── STEP 1: EMAIL VERIFICATION ─── */}
           {step === 1 && (
             <motion.div
               key="step1"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+            >
+              <Card className="border border-white/80 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-2xl rounded-[2rem]">
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 bg-blue-100 dark:bg-blue-500/20 rounded-2xl">
+                      <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900 dark:text-slate-50">Verifikasi Email</h2>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Konfirmasi alamat email Anda</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                      Untuk menulis artikel di blog ExportReady AI, Anda perlu memverifikasi alamat email Anda.
+                      <br /><br />
+                      Silakan cek kotak masuk (inbox) atau folder spam email Anda pada alamat:
+                      <strong className="block text-slate-800 dark:text-slate-200 mt-1 font-black text-base">{user?.email}</strong>
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                      <Button
+                        onClick={checkVerification}
+                        disabled={loading}
+                        className="w-full h-12 font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 rounded-xl"
+                      >
+                        {loading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <>Saya Sudah Verifikasi <ArrowRight className="ml-2 h-4 w-4" /></>
+                        )}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={resendVerificationEmail}
+                        disabled={loading}
+                        className="w-full h-12 font-black border-2 dark:border-slate-600 dark:text-slate-300 rounded-xl"
+                      >
+                        {loading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          'Kirim Ulang Email Verifikasi'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ─── STEP 2: DISCLAIMER ─── */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
@@ -231,106 +297,15 @@ export default function EditorOnboardingPage() {
 
                   <Button
                     onClick={handleDisclaimerAgree}
-                    disabled={!agreed}
+                    disabled={!agreed || loading}
                     className="w-full h-12 font-black bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 rounded-xl transition-all active:scale-[0.98]"
                   >
-                    Saya Setuju & Lanjutkan <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* ─── STEP 2: PHONE VERIFICATION ─── */}
-          {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-            >
-              <Card className="border border-white/80 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-2xl rounded-[2rem]">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-blue-100 dark:bg-blue-500/20 rounded-2xl">
-                      <Phone className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-slate-900 dark:text-slate-50">Verifikasi Nomor HP</h2>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Konfirmasi identitas Anda</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-black text-slate-700 dark:text-slate-300 mb-2 block">Nomor HP (dengan kode negara)</label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+62 812 3456 7890"
-                          className="pl-10 h-12 bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100"
-                          disabled={otpSent}
-                        />
-                      </div>
-                    </div>
-
-                    {!otpSent ? (
-                      <Button
-                        onClick={sendOtp}
-                        disabled={loading}
-                        className="w-full h-12 font-black bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 rounded-xl"
-                      >
-                        {loading ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <>Kirim Kode OTP <ArrowRight className="ml-2 h-4 w-4" /></>
-                        )}
-                      </Button>
+                    {loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4"
-                      >
-                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-500/30 rounded-xl text-sm text-emerald-700 dark:text-emerald-300 font-medium">
-                          ✅ Kode OTP terkirim ke <strong>{phone}</strong>. Cek SMS Anda.
-                          <br /><span className="text-xs opacity-70">(MVP: gunakan kode <strong>123456</strong>)</span>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-black text-slate-700 dark:text-slate-300 mb-2 block">Masukkan Kode OTP</label>
-                          <Input
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            placeholder="6 digit kode OTP"
-                            className="h-12 text-center text-xl font-black tracking-widest bg-white/80 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100"
-                            maxLength={6}
-                          />
-                        </div>
-
-                        <Button
-                          onClick={verifyOtp}
-                          disabled={loading || otp.length < 6}
-                          className="w-full h-12 font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 rounded-xl"
-                        >
-                          {loading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <>Verifikasi & Lanjutkan <ArrowRight className="ml-2 h-4 w-4" /></>
-                          )}
-                        </Button>
-
-                        <button
-                          onClick={() => { setOtpSent(false); setOtp(''); }}
-                          className="w-full text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition-colors"
-                        >
-                          Ubah nomor HP
-                        </button>
-                      </motion.div>
+                      <>Saya Setuju & Aktifkan Akun Editor <ArrowRight className="ml-2 h-4 w-4" /></>
                     )}
-                  </div>
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
@@ -355,19 +330,19 @@ export default function EditorOnboardingPage() {
                     <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                   </motion.div>
 
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-slate-50 mb-3">Pendaftaran Editor Berhasil!</h2>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-slate-50 mb-3">Akun Editor Aktif!</h2>
                   <p className="text-slate-500 dark:text-slate-400 mb-2 font-medium leading-relaxed">
-                    Permohonan Anda telah kami terima dan sedang dalam proses review oleh tim ExportReady AI.
+                    Selamat! Anda sekarang resmi terdaftar sebagai editor blog di ExportReady AI.
                   </p>
                   <p className="text-slate-400 dark:text-slate-500 text-sm mb-8">
-                    Kami akan menghubungi Anda melalui email dan nomor HP yang terdaftar dalam 1-3 hari kerja.
+                    Anda sekarang dapat mulai menulis, mengatur SEO, dan mempublikasikan artikel Anda.
                   </p>
 
                   <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                     {[
-                      { icon: ShieldCheck, label: 'Disclaimer', color: 'text-amber-500' },
-                      { icon: Phone, label: 'HP Terverifikasi', color: 'text-blue-500' },
-                      { icon: Star, label: 'Review Admin', color: 'text-emerald-500' },
+                      { icon: ShieldCheck, label: 'Email Terverifikasi', color: 'text-blue-500' },
+                      { icon: FileText, label: 'Disclaimer Disetujui', color: 'text-amber-500' },
+                      { icon: Star, label: 'Akun Editor Aktif', color: 'text-emerald-500' },
                     ].map(({ icon: Icon, label, color }) => (
                       <div key={label} className="flex flex-col items-center gap-1.5">
                         <div className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 ${color}`}>
@@ -380,10 +355,14 @@ export default function EditorOnboardingPage() {
 
                   <div className="flex flex-col gap-3">
                     <Button
-                      onClick={() => router.push('/dashboard')}
+                      onClick={() => {
+                        router.push('/editor/dashboard');
+                        // Force layout update
+                        router.refresh();
+                      }}
                       className="w-full h-12 font-black bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20"
                     >
-                      <PenLine className="mr-2 h-4 w-4" /> Ke Dashboard Saya
+                      <PenLine className="mr-2 h-4 w-4" /> Mulai Menulis Artikel
                     </Button>
                     <Button
                       variant="outline"
