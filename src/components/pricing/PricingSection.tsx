@@ -103,6 +103,11 @@ export function PricingSection() {
   const [manualTx, setManualTx] = useState<{ orderId: string; planName: string; priceIdr: number } | null>(null);
   const [, setCopiedField] = useState<string | null>(null);
 
+  const bankName = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_BANK_NAME || 'Bank Central Asia (BCA)';
+  const accountNumber = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_ACCOUNT_NUMBER || '801234567890';
+  const accountName = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_ACCOUNT_NAME || 'PT Export Ready Indonesia';
+  const whatsappNumber = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_WHATSAPP_NUMBER || '6281234567890';
+
   useEffect(() => {
     async function load() {
       try {
@@ -482,15 +487,15 @@ export function PricingSection() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground font-medium">Bank</span>
-                      <span className="font-bold text-foreground">Bank Central Asia (BCA)</span>
+                      <span className="font-bold text-foreground">{bankName}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground font-medium">Nomor Rekening</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-foreground tracking-wider">801234567890</span>
+                        <span className="font-mono font-bold text-foreground tracking-wider">{accountNumber}</span>
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText('801234567890');
+                            navigator.clipboard.writeText(accountNumber);
                             toast.success('Nomor rekening berhasil disalin!');
                             setCopiedField('rekening');
                             setTimeout(() => setCopiedField(null), 2000);
@@ -504,7 +509,7 @@ export function PricingSection() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground font-medium">Atas Nama</span>
-                      <span className="font-bold text-foreground">PT Export Ready Indonesia</span>
+                      <span className="font-bold text-foreground">{accountName}</span>
                     </div>
                   </div>
                 </div>
@@ -513,7 +518,7 @@ export function PricingSection() {
                 <div className="space-y-2.5">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Langkah Selanjutnya</h4>
                   <ol className="text-xs space-y-2 text-muted-foreground list-decimal pl-4 font-semibold leading-relaxed">
-                    <li>Lakukan transfer dengan nominal yang <strong className="text-foreground">tepat</strong> ke rekening BCA di atas.</li>
+                    <li>Lakukan transfer dengan nominal yang <strong className="text-foreground">tepat</strong> ke rekening transfer di atas.</li>
                     <li>Simpan bukti transfer Anda.</li>
                     <li>Klik tombol <strong className="text-foreground">Konfirmasi via WhatsApp</strong> untuk mengirim bukti pembayaran ke Admin.</li>
                     <li>Akses fitur lengkap akan diaktifkan dalam waktu <strong className="text-foreground">5-15 menit</strong> setelah verifikasi.</li>
@@ -540,7 +545,7 @@ export function PricingSection() {
                     className="rounded-xl font-bold h-12 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
                   >
                     <a
-                      href={`https://wa.me/6281234567890?text=${encodeURIComponent(
+                      href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
                         `Halo Admin ExportReady! Saya ingin melakukan konfirmasi pembayaran manual untuk berlangganan.\n\nDetail Transaksi:\n- Paket: ${manualTx.planName === 'premium_monthly' ? 'Premium Bulanan' : 'Premium Tahunan'}\n- No. Pesanan: ${manualTx.orderId}\n- Total Transfer: Rp ${(manualTx.priceIdr + Math.round(manualTx.priceIdr * 0.11)).toLocaleString('id-ID')}\n\nSaya melampirkan bukti transfer di bawah ini.`
                       )}`}
                       target="_blank"

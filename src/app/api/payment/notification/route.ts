@@ -29,10 +29,7 @@ function mapTransactionStatus(
   return null;
 }
 
-function getSubscriptionDurationDays(planName: string): number {
-  if (planName === 'premium_yearly') return 365;
-  return 30;
-}
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -94,53 +91,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    if (mappedStatus === 'settlement' && payment) {
-      const { data: plan } = await admin
-        .from('subscription_plans')
-        .select('name')
-        .eq('id', payment.plan_id)
-        .single();
 
-      const planName = plan?.name ?? 'premium_monthly';
-      const durationDays = getSubscriptionDurationDays(planName);
-      const now = new Date();
-      const expiresAt = new Date(now);
-      expiresAt.setDate(expiresAt.getDate() + durationDays);
-
-      const { data: existingSub } = await admin
-        .from('user_subscriptions')
-        .select('id, expires_at')
-        .eq('user_id', payment.user_id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (existingSub) {
-        const currentExpiry = new Date(existingSub.expires_at);
-        const baseDate = currentExpiry > now ? currentExpiry : now;
-        const newExpiry = new Date(baseDate);
-        newExpiry.setDate(newExpiry.getDate() + durationDays);
-
-        await admin
-          .from('user_subscriptions')
-          .update({
-            plan_id: payment.plan_id,
-            status: 'active',
-            expires_at: newExpiry.toISOString(),
-            midtrans_order_id: order_id,
-            updated_at: now.toISOString(),
-          })
-          .eq('id', existingSub.id);
-      } else {
-        await admin.from('user_subscriptions').insert({
-          user_id: payment.user_id,
-          plan_id: payment.plan_id,
-          status: 'active',
-          started_at: now.toISOString(),
-          expires_at: expiresAt.toISOString(),
-          midtrans_order_id: order_id,
-        });
-      }
-    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
