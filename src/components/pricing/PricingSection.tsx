@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Crown, Sparkles, Loader2, X, Copy, ExternalLink, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getSnapScriptUrl, isMidtransProduction } from '@/lib/midtrans-client-browser';
 import { toast } from 'sonner';
 
@@ -105,24 +105,105 @@ export function PricingSection() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session);
+      try {
+        if (!isSupabaseConfigured()) {
+          console.warn('Supabase not configured, using fallback plans');
+          setPlans([
+            {
+              id: 'free',
+              name: 'free',
+              price_idr: 0,
+              features: ['assessment_basic'],
+              is_active: true,
+            },
+            {
+              id: 'premium_monthly',
+              name: 'premium_monthly',
+              price_idr: 99000,
+              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
+              is_active: true,
+            },
+            {
+              id: 'premium_yearly',
+              name: 'premium_yearly',
+              price_idr: 990000,
+              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
+              is_active: true,
+            },
+          ]);
+          return;
+        }
 
-      const { data } = await supabase
-        .from('subscription_plans')
-        .select('id, name, price_idr, features, is_active')
-        .eq('is_active', true)
-        .order('price_idr', { ascending: true });
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsLoggedIn(!!session);
 
-      if (data) {
-        setPlans(
-          data.map((p) => ({
-            ...p,
-            features: Array.isArray(p.features) ? p.features : [],
-          })),
-        );
+        const { data } = await supabase
+          .from('subscription_plans')
+          .select('id, name, price_idr, features, is_active')
+          .eq('is_active', true)
+          .order('price_idr', { ascending: true });
+
+        if (data && data.length > 0) {
+          setPlans(
+            data.map((p) => ({
+              ...p,
+              features: Array.isArray(p.features) ? p.features : [],
+            })),
+          );
+        } else {
+          // If query returned no plans, use default fallback plans
+          setPlans([
+            {
+              id: 'free',
+              name: 'free',
+              price_idr: 0,
+              features: ['assessment_basic'],
+              is_active: true,
+            },
+            {
+              id: 'premium_monthly',
+              name: 'premium_monthly',
+              price_idr: 99000,
+              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
+              is_active: true,
+            },
+            {
+              id: 'premium_yearly',
+              name: 'premium_yearly',
+              price_idr: 990000,
+              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
+              is_active: true,
+            },
+          ]);
+        }
+      } catch (err) {
+        console.error('Error loading pricing plans:', err);
+        setPlans([
+          {
+            id: 'free',
+            name: 'free',
+            price_idr: 0,
+            features: ['assessment_basic'],
+            is_active: true,
+          },
+          {
+            id: 'premium_monthly',
+            name: 'premium_monthly',
+            price_idr: 99000,
+            features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
+            is_active: true,
+          },
+          {
+            id: 'premium_yearly',
+            name: 'premium_yearly',
+            price_idr: 990000,
+            features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
+            is_active: true,
+          },
+        ]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, []);

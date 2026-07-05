@@ -21,7 +21,7 @@ import {
   Save,
   Sparkles
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -122,12 +122,17 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     async function getSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        if (!form.getValues('email')) {
-          form.setValue('email', session.user.email || '');
+      try {
+        if (!isSupabaseConfigured()) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          if (!form.getValues('email')) {
+            form.setValue('email', session.user.email || '');
+          }
         }
+      } catch (err) {
+        console.error('Error fetching session in assessment page:', err);
       }
     }
     getSession();

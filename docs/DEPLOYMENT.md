@@ -20,6 +20,12 @@ Copy [`.env.example`](../.env.example) to `.env.local` for local development.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon (public) key |
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Auth redirect base; auto from `VERCEL_URL` on Vercel when unset in browser |
 | `GEMINI_API_KEY` | Yes for AI | Server-only; `/api/analyze` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes (payments, admin writes) | Server-only; required for payment webhook + admin queries |
+| `MIDTRANS_SERVER_KEY` | Yes (payments) | Server-only |
+| `MIDTRANS_CLIENT_KEY` | Yes (payments) | Server-only; used by server Snap client init in this repo |
+| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Yes (payments) | Public client key for Snap.js script tag |
+| `MIDTRANS_IS_PRODUCTION` | Recommended | `true` for live transactions, `false` for sandbox |
+| `NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION` | Recommended | Keep in sync with `MIDTRANS_IS_PRODUCTION` |
 
 Build runs `scripts/validate-env.mjs` and **fails** if Supabase vars are missing. Override only for experiments:
 
@@ -187,3 +193,6 @@ gcloud run services update-traffic exportready-prod \
 - [ ] `GEMINI_API_KEY` in Vercel and Secret Manager (Cloud Run)
 - [ ] `/api/health` returns `ok: true` on production
 - [ ] Test login, register, assessment, results on both hosts
+- [ ] Midtrans env vars set on the deployed environment and redeployed
+- [ ] Midtrans Dashboard: set **Payment Notification URL** to `https://<YOUR_DOMAIN>/api/payment/notification`
+- [ ] Midtrans set to **Production** only when you are ready to accept real money (and `*_IS_PRODUCTION=true`)

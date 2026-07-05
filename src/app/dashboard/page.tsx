@@ -30,7 +30,7 @@ import {
   Area
 } from 'recharts';
 import { AnimatePresence } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,63 +58,73 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function getDashboardData() {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        router.push('/login');
-        return;
-      }
-
-      setUser(session.user);
-
-      // Fetch history
-      const { data, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-
-      if (data) {
-        setHistory(data);
-        
-        // Calculate stats
-        const completed = data.filter(a => a.status === 'completed');
-        const total = completed.length;
-        const avg = total > 0 
-          ? Math.round(completed.reduce((acc, curr) => acc + (curr.readiness_score || 0), 0) / total)
-          : 0;
-        
-        // Most frequent #1 recommended country across assessments
-        const countryCount = new Map<string, number>();
-        for (const a of completed) {
-          const top = a.ai_result?.topCountries?.[0]?.country;
-          if (top) countryCount.set(top, (countryCount.get(top) || 0) + 1);
+      try {
+        if (!isSupabaseConfigured()) {
+          setLoading(false);
+          router.push('/login');
+          return;
         }
-        const topCountry = [...countryCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
 
-        setStats({
-          totalAssessments: total,
-          avgScore: avg,
-          topCountry: topCountry || '-',
-        });
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          router.push('/login');
+          return;
+        }
 
-        // Roadmap checklist progress per assessment
-        const { data: progressRows } = await supabase
-          .from('roadmap_progress')
-          .select('assessment_id, done')
+        setUser(session.user);
+
+        // Fetch history
+        const { data, error } = await supabase
+          .from('assessments')
+          .select('*')
           .eq('user_id', session.user.id)
-          .eq('done', true);
+          .order('created_at', { ascending: false });
 
-        if (progressRows) {
-          const doneMap: Record<string, number> = {};
-          for (const row of progressRows) {
-            doneMap[row.assessment_id] = (doneMap[row.assessment_id] || 0) + 1;
+        if (data) {
+          setHistory(data);
+          
+          // Calculate stats
+          const completed = data.filter(a => a.status === 'completed');
+          const total = completed.length;
+          const avg = total > 0 
+            ? Math.round(completed.reduce((acc, curr) => acc + (curr.readiness_score || 0), 0) / total)
+            : 0;
+          
+          // Most frequent #1 recommended country across assessments
+          const countryCount = new Map<string, number>();
+          for (const a of completed) {
+            const top = a.ai_result?.topCountries?.[0]?.country;
+            if (top) countryCount.set(top, (countryCount.get(top) || 0) + 1);
           }
-          setRoadmapDone(doneMap);
+          const topCountry = [...countryCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+
+          setStats({
+            totalAssessments: total,
+            avgScore: avg,
+            topCountry: topCountry || '-',
+          });
+
+          // Roadmap checklist progress per assessment
+          const { data: progressRows } = await supabase
+            .from('roadmap_progress')
+            .select('assessment_id, done')
+            .eq('user_id', session.user.id)
+            .eq('done', true);
+
+          if (progressRows) {
+            const doneMap: Record<string, number> = {};
+            for (const row of progressRows) {
+              doneMap[row.assessment_id] = (doneMap[row.assessment_id] || 0) + 1;
+            }
+            setRoadmapDone(doneMap);
+          }
         }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     }
 
     getDashboardData();

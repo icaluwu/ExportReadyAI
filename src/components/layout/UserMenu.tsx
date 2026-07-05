@@ -21,7 +21,7 @@ import {
   Star,
   ShieldCheck,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -270,38 +270,57 @@ export function UserMenu() {
   const router = useRouter();
 
   useEffect(() => {
+    let unsubscribeFn: (() => void) | undefined;
+
     async function getSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        // Fetch profile for account_type and editor status
-        const { data } = await supabase
-          .from('profiles')
-          .select('account_type, full_name')
-          .eq('id', currentUser.id)
-          .single();
-        setProfile(data);
-      }
-
-      setLoading(false);
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (_event, session) => {
-          const u = session?.user ?? null;
-          setUser(u);
-          if (u) {
-            const { data } = await supabase.from('profiles').select('account_type, full_name').eq('id', u.id).single();
-            setProfile(data);
-          } else {
-            setProfile(null);
-          }
+      try {
+        if (!isSupabaseConfigured()) {
+          setLoading(false);
+          return;
         }
-      );
-      return () => subscription.unsubscribe();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          // Fetch profile for account_type and editor status
+          const { data } = await supabase
+            .from('profiles')
+            .select('account_type, full_name')
+            .eq('id', currentUser.id)
+            .single();
+          setProfile(data);
+        }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (_event, session) => {
+            const u = session?.user ?? null;
+            setUser(u);
+            if (u) {
+              const { data } = await supabase
+                .from('profiles')
+                .select('account_type, full_name')
+                .eq('id', u.id)
+                .single();
+              setProfile(data);
+            } else {
+              setProfile(null);
+            }
+          }
+        );
+        unsubscribeFn = () => subscription.unsubscribe();
+      } catch (err) {
+        console.error('Error fetching user session:', err);
+      } finally {
+        setLoading(false);
+      }
     }
     getSession();
+
+    return () => {
+      if (unsubscribeFn) unsubscribeFn();
+    };
   }, []);
 
   const handleLogout = async () => {

@@ -18,7 +18,7 @@ import {
   Camera,
   CheckCircle2,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,33 +48,47 @@ export default function ProfileEditPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-      setUser(user);
+      try {
+        if (!isSupabaseConfigured()) {
+          setFetching(false);
+          router.push('/login');
+          return;
+        }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+        setUser(user);
 
-      if (profile) {
-        setForm({
-          fullName: profile.full_name || user.user_metadata?.full_name || '',
-          username: profile.username || '',
-          bio: profile.bio || '',
-          avatarUrl: profile.avatar_url || '',
-          phoneNumber: profile.phone_number || '',
-          socialInstagram: profile.social_instagram || '',
-          socialTwitter: profile.social_twitter || '',
-          socialLinkedin: profile.social_linkedin || '',
-          socialGithub: profile.social_github || '',
-          socialWebsite: profile.social_website || '',
-        });
-      } else {
-        setForm(f => ({ ...f, fullName: user.user_metadata?.full_name || '' }));
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setForm({
+            fullName: profile.full_name || user.user_metadata?.full_name || '',
+            username: profile.username || '',
+            bio: profile.bio || '',
+            avatarUrl: profile.avatar_url || '',
+            phoneNumber: profile.phone_number || '',
+            socialInstagram: profile.social_instagram || '',
+            socialTwitter: profile.social_twitter || '',
+            socialLinkedin: profile.social_linkedin || '',
+            socialGithub: profile.social_github || '',
+            socialWebsite: profile.social_website || '',
+          });
+        } else {
+          setForm(f => ({ ...f, fullName: user.user_metadata?.full_name || '' }));
+        }
+      } catch (err) {
+        console.error('Error loading user profile edit page:', err);
+      } finally {
+        setFetching(false);
       }
-      setFetching(false);
     }
     load();
   }, [router]);
