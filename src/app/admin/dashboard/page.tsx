@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
 
       // Fetch users
       const { data: usersData, error: usersErr } = await supabase
-        .from('admin_users_view')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
