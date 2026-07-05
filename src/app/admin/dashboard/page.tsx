@@ -76,14 +76,12 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true);
 
-      // Fetch users
+      // Fetch users via secure RPC
       const { data: usersData, error: usersErr } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_users_for_admin');
 
       if (usersErr) throw usersErr;
-      setUsers(usersData || []);
+      setUsers((usersData as unknown as AdminUser[]) || []);
 
       // Fetch blog posts
       const { data: postsData, error: postsErr } = await supabase
