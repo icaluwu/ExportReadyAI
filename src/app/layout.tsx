@@ -9,6 +9,12 @@ import { getServerSiteUrl } from "@/lib/site-url";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
+export const viewport = {
+  themeColor: "#10b981",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(getServerSiteUrl()),
   title: {
@@ -64,6 +70,7 @@ export const metadata: Metadata = {
     apple: "/logo.ico",
     shortcut: "/logo.ico",
   },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

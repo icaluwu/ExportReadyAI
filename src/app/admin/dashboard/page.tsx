@@ -326,12 +326,12 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
                       <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
-                        <span>Email Superadmin</span>
-                        <span className="font-mono text-slate-900 dark:text-slate-100">teukuvaickal@export-ready-ai.vercel.app</span>
+                        <span>Akses Superadmin</span>
+                        <span className="text-slate-900 dark:text-slate-100">Via Role Database</span>
                       </div>
                       <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
                         <span>Verifikasi Email Superadmin</span>
-                        <span className="text-emerald-600 dark:text-emerald-400">Bypass Aktif</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">Wajib Terverifikasi</span>
                       </div>
                       <div className="flex justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
                         <span>Sistem Onboarding Editor</span>
@@ -420,7 +420,7 @@ export default function AdminDashboardPage() {
                                   onValueChange={(val: 'user' | 'editor' | 'admin' | null) => {
                                     if (val) updateUserRole(userItem.id, val);
                                   }}
-                                  disabled={userItem.email === 'teukuvaickal@export-ready-ai.vercel.app'}
+                                  disabled={userItem.account_type === 'admin'}
                                 >
                                   <SelectTrigger className="w-28 ml-auto h-8 text-xs font-bold bg-slate-50 dark:bg-slate-800 border-none">
                                     <SelectValue />

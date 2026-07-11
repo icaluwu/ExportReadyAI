@@ -1,13 +1,12 @@
 import type { MetadataRoute } from 'next'
 import { getServerSiteUrl } from '@/lib/site-url'
-import { createClient } from '@/lib/supabase-server'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getServerSiteUrl()
   const now = new Date()
 
-  // Static routes
-  const staticRoutes = [
+  // Static routes — always present, even if DB is unreachable at build time
+  const staticRoutes: MetadataRoute.Sitemap = [
     '',
     '/blog',
     '/assessment',
@@ -20,12 +19,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: now,
-    changeFrequency: 'weekly' as const,
+    changeFrequency: 'weekly',
     priority: path === '' ? 1 : path === '/blog' ? 0.9 : 0.8,
   }))
 
-  // Dynamic blog posts
+  // Dynamic blog posts — best-effort; never break the sitemap on DB failure.
+  // Lazy-import so a missing/invalid env var doesn't crash the module at build.
   try {
+    const { createClient } = await import('@/lib/supabase-server')
     const supabase = await createClient()
     const { data: posts } = await supabase
       .from('blog_posts')
@@ -34,15 +35,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .order('updated_at', { ascending: false })
       .limit(100)
 
-    const blogRoutes = (posts ?? []).map((post) => ({
+    const blogRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post) => ({
       url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.updated_at),
-      changeFrequency: 'weekly' as const,
+      lastModified: post.updated_at ? new Date(post.updated_at) : now,
+      changeFrequency: 'weekly',
       priority: 0.7,
     }))
 
     return [...staticRoutes, ...blogRoutes]
-  } catch {
+  } catch (error) {
+    console.warn('[sitemap] Falling back to static-only routes:', error)
     return staticRoutes
   }
 }

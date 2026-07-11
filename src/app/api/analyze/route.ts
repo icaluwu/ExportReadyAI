@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { model } from '@/lib/gemini';
 import { calculateReadinessScore } from '@/lib/scoring';
 import {
@@ -6,10 +7,53 @@ import {
   formatRegulationContext,
   extractSourceTitles,
 } from '@/lib/rag';
+import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
+
+// Rate limit: 5 assessments per minute per client (this is the most expensive endpoint)
+const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 });
+
+// Input validation schema — guards against crashes (e.g. undefined.certifications.join)
+const AnalyzeSchema = z.object({
+  productName: z.string().min(1).max(200),
+  category: z.string().min(1).max(100),
+  description: z.string().max(2000).optional().nullable(),
+  hsCode: z.string().max(50).optional().nullable(),
+  capacity: z.coerce.number().nonnegative(),
+  capacityUnit: z.string().max(50),
+  price: z.coerce.number().nonnegative(),
+  hasOnlinePresence: z.boolean().optional().nullable(),
+  exportExperience: z.string().max(500),
+  certifications: z.array(z.string().max(100)).default([]),
+  meetsInternationalStandards: z.boolean().optional().nullable(),
+  hasTrademark: z.boolean().optional().nullable(),
+  targetMarkets: z.array(z.string().max(100)).default([]),
+  exportMotivation: z.string().max(1000).optional().nullable(),
+  email: z.string().email().max(200).optional().nullable(),
+});
 
 export async function POST(req: NextRequest) {
+  // ── Rate limit ──────────────────────────────────────────────
+  const ip = getClientIp(req);
+  const { limited } = rateLimit(ip);
+  if (limited) {
+    return NextResponse.json(
+      { error: 'Terlalu banyak permintaan. Coba lagi sebentar lagi.' },
+      { status: 429 },
+    );
+  }
+
   try {
-    const data = await req.json();
+    const raw = await req.json();
+
+    // ── Validate input ────────────────────────────────────────
+    const parsed = AnalyzeSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Data input tidak valid.', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
+      );
+    }
+    const data = parsed.data;
 
     // Calculate score
     const scoreBreakdown = calculateReadinessScore({
@@ -23,15 +67,15 @@ export async function POST(req: NextRequest) {
     });
 
     // RAG: retrieve relevant regulation chunks
-    const ragQuery = `Produk: ${data.productName}, kategori: ${data.category}, target pasar: ${(data.targetMarkets || []).join(', ')}`;
+    const ragQuery = `Produk: ${data.productName}, kategori: ${data.category}, target pasar: ${data.targetMarkets.join(', ')}`;
     const regulationChunks = await searchRegulations(ragQuery, 5);
     const regulationContext = formatRegulationContext(regulationChunks);
     const regulationSources = extractSourceTitles(regulationChunks);
 
     // Gemini Prompt
-    let systemPrompt = `Kamu adalah konsultan ekspor senior Indonesia dengan pengalaman 20 tahun. 
-    Berikan analisis ekspor dalam Bahasa Indonesia yang profesional namun 
-    mudah dipahami oleh pelaku UMKM. Selalu berikan rekomendasi yang 
+    let systemPrompt = `Kamu adalah konsultan ekspor senior Indonesia dengan pengalaman 20 tahun.
+    Berikan analisis ekspor dalam Bahasa Indonesia yang profesional namun
+    mudah dipahami oleh pelaku UMKM. Selalu berikan rekomendasi yang
     spesifik, actionable, dan realistis.`;
 
     if (regulationContext) {
@@ -46,13 +90,13 @@ export async function POST(req: NextRequest) {
     - Pengalaman ekspor: ${data.exportExperience}
     - Target pasar diminati: ${data.targetMarkets.join(', ')}
     - Export Readiness Score: ${scoreBreakdown.totalScore}/100
-    
+
     Berikan dalam format JSON:
     {
       "summary": "ringkasan 2 kalimat kondisi UMKM ini",
       "topCountries": [
-        {"country": "nama negara", "flag": "emoji bendera", 
-         "demandLevel": "Tinggi/Sedang/Rendah", 
+        {"country": "nama negara", "flag": "emoji bendera",
+         "demandLevel": "Tinggi/Sedang/Rendah",
          "reason": "1 kalimat alasan spesifik"}
       ],
       "gaps": ["gap 1", "gap 2", "gap 3"],
@@ -72,11 +116,11 @@ export async function POST(req: NextRequest) {
       const result = await model.generateContent(fullPrompt);
       const response = await result.response;
       const text = response.text();
-      
+
       // Extract JSON from response (handling potential markdown code blocks)
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       aiResult = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-      
+
       if (!aiResult) {
         console.error('Gemini returned invalid format:', text);
         throw new Error('Format respon AI tidak valid');
@@ -87,8 +131,11 @@ export async function POST(req: NextRequest) {
       }
     } catch (aiError) {
       console.error('Gemini API Error Detail:', aiError);
-      const errorMessage = aiError instanceof Error ? aiError.message : 'Gagal menghasilkan analisis';
-      throw new Error(`AI Error: ${errorMessage}`);
+      // Sanitized: do not leak internal error detail to client
+      return NextResponse.json(
+        { error: 'Gagal mendapatkan respon dari AI. Silakan coba lagi.' },
+        { status: 502 },
+      );
     }
 
     // Get user session for ownership
@@ -133,9 +180,12 @@ export async function POST(req: NextRequest) {
         hint: error.hint,
         code: error.code,
         tableName: 'assessments',
-        dataKeys: Object.keys(data)
       });
-      throw new Error(`Database Error: ${error.message} - Check if all columns exist in 'assessments' table.`);
+      // Sanitized message — no internal details to client
+      return NextResponse.json(
+        { error: 'Terjadi kendala saat menyimpan hasil assessment. Silakan coba lagi.' },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({
@@ -146,25 +196,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('CRITICAL API ERROR:', error);
-    
-    // Provide a more helpful error message based on the type of error
-    let userMessage = 'Terjadi kesalahan saat memproses data. ';
-    const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan pada server';
-    
-    if (errorMessage.includes('Database Error')) {
-      userMessage += 'Terjadi kendala pada database (Supabase). Pastikan tabel sudah dibuat.';
-    } else if (errorMessage.includes('AI')) {
-      userMessage += 'Gagal mendapatkan respon dari AI. Periksa API Key Anda.';
-    } else {
-      userMessage += 'Silakan coba lagi dalam beberapa saat.';
-    }
-
+    // Generic sanitized message — never leak internals
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        userMessage: userMessage
-      },
-      { status: 500 }
+      { error: 'Terjadi kesalahan saat memproses data. Silakan coba lagi dalam beberapa saat.' },
+      { status: 500 },
     );
   }
 }

@@ -83,6 +83,75 @@ export function hasFeature(features: string[], feature: string): boolean {
   return features.includes(feature);
 }
 
+/**
+ * Compute the expiry date for a subscription plan based on its name.
+ * Returns null for non-premium (free) plans.
+ */
+export function computeExpiryDate(planName: string, from: Date = new Date()): Date | null {
+  switch (planName) {
+    case 'premium_monthly':
+      return new Date(from.getTime() + 30 * 24 * 60 * 60 * 1000);
+    case 'premium_yearly':
+      return new Date(from.getTime() + 365 * 24 * 60 * 60 * 1000);
+    default:
+      return null;
+  }
+}
+
+/**
+ * Activate (or renew) a user's subscription after a successful payment.
+ * Expires any prior active subscription for the user and inserts a new one.
+ *
+ * Returns true on success, false on failure (errors are logged, not thrown,
+ * so a webhook can still ack 200 to Midtrans and retry via reconciliation).
+ */
+export async function activateSubscription(
+  userId: string,
+  planId: string,
+  planName: string,
+): Promise<boolean> {
+  try {
+    const admin = createAdminClient();
+    const now = new Date();
+    const expiresAt = computeExpiryDate(planName, now);
+
+    if (!expiresAt) {
+      console.warn('[activateSubscription] Unknown plan name, skipping:', planName);
+      return false;
+    }
+
+    // Expire any existing active subscription for this user to avoid overlaps
+    const { error: expireError } = await admin
+      .from('user_subscriptions')
+      .update({ status: 'expired', updated_at: now.toISOString() })
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (expireError) {
+      console.error('[activateSubscription] Failed to expire prior subscription:', expireError);
+      // Non-fatal: continue to insert the new one
+    }
+
+    const { error: insertError } = await admin.from('user_subscriptions').insert({
+      user_id: userId,
+      plan_id: planId,
+      status: 'active',
+      started_at: now.toISOString(),
+      expires_at: expiresAt.toISOString(),
+    });
+
+    if (insertError) {
+      console.error('[activateSubscription] Failed to insert subscription:', insertError);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('[activateSubscription] Unexpected error:', err);
+    return false;
+  }
+}
+
 export function isPremiumUser(info: UserSubscriptionInfo): boolean {
   return info.status === 'active';
 }

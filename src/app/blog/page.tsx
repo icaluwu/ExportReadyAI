@@ -21,9 +21,16 @@ export const metadata: Metadata = {
   },
 };
 
-function estimateReadTime(content: string): number {
-  const words = content.split(/\s+/).length;
-  return Math.max(1, Math.ceil(words / 200));
+// Revalidate the blog listing every 5 minutes (ISR) so new/edited posts appear
+// without re-running the heavy Supabase query on every request.
+export const revalidate = 300;
+
+/** Estimate read time from excerpt/preview text (avoids fetching full content). */
+function estimateReadTime(text: string): number {
+  if (!text) return 1;
+  const words = text.split(/\s+/).length;
+  // Excerpt is a summary; assume ~4x longer full article, ~200 wpm.
+  return Math.max(1, Math.ceil((words * 4) / 200));
 }
 
 export default async function BlogPage({
@@ -40,11 +47,12 @@ export default async function BlogPage({
     .select('*')
     .order('name');
 
-  // Fetch posts
+  // Fetch posts (note: content intentionally omitted — it's large and only needed
+  // on the detail page; read-time is estimated from the excerpt)
   let query = supabase
     .from('blog_posts')
     .select(`
-      id, title, slug, excerpt, og_image_url, published_at, view_count, content,
+      id, title, slug, excerpt, og_image_url, published_at, view_count,
       category:blog_categories(id, name, slug, color),
       author:profiles!blog_posts_author_id_fkey(username, full_name, avatar_url)
     `)
@@ -222,7 +230,7 @@ export default async function BlogPage({
                           </div>
                           <div className="flex items-center gap-1 text-xs text-slate-400 font-bold">
                             <Clock className="h-3.5 w-3.5" />
-                            {estimateReadTime(featuredPost.content)} mnt baca
+                            {estimateReadTime(featuredPost.excerpt)} mnt baca
                           </div>
                         </div>
                       </CardContent>
@@ -276,7 +284,7 @@ export default async function BlogPage({
                           </div>
                           <div className="flex items-center gap-1 text-xs text-slate-400 font-bold">
                             <Clock className="h-3 w-3" />
-                            {estimateReadTime(post.content)} mnt
+                            {estimateReadTime(post.excerpt)} mnt
                           </div>
                         </div>
                       </CardContent>

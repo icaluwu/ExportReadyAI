@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { verifyNotificationSignature } from '@/lib/midtrans';
+import { activateSubscription } from '@/lib/subscription';
 
 interface MidtransNotification {
   order_id: string;
@@ -28,8 +29,6 @@ function mapTransactionStatus(
   }
   return null;
 }
-
-
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,7 +90,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // ── Activate the subscription when payment is settled ──────
+    // This is the critical step that grants premium access to the user.
+    if (mappedStatus === 'settlement' && payment?.user_id && payment?.plan_id) {
+      const { data: plan } = await admin
+        .from('subscription_plans')
+        .select('name')
+        .eq('id', payment.plan_id)
+        .maybeSingle();
 
+      if (plan?.name) {
+        const activated = await activateSubscription(
+          payment.user_id,
+          payment.plan_id,
+          plan.name,
+        );
+        if (!activated) {
+          // Logged inside activateSubscription; still ack 200 so Midtrans
+          // doesn't keep retrying. Reconcile manually if needed.
+          console.error(
+            '[webhook] Subscription activation failed for order:',
+            order_id,
+          );
+        }
+      } else {
+        console.error('[webhook] Plan not found for plan_id:', payment.plan_id);
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

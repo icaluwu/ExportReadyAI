@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single();
 
-  const isAdmin = profile?.account_type === 'admin' || user.email === 'teukuvaickal@export-ready-ai.vercel.app';
+  const isAdmin = profile?.account_type === 'admin';
 
   if (!isAdmin) {
     redirect('/dashboard');

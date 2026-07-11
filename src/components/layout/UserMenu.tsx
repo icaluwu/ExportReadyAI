@@ -110,8 +110,8 @@ export function UserMenu() {
     );
   }
 
-  const isEditor = profile?.account_type === 'editor' || profile?.account_type === 'admin' || user?.email === 'teukuvaickal@export-ready-ai.vercel.app';
-  const isAdmin = profile?.account_type === 'admin' || user?.email === 'teukuvaickal@export-ready-ai.vercel.app';
+  const isEditor = profile?.account_type === 'editor' || profile?.account_type === 'admin';
+  const isAdmin = profile?.account_type === 'admin';
   const displayName = profile?.full_name || user.user_metadata?.full_name || 'User';
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 

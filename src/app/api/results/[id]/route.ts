@@ -75,10 +75,10 @@ export async function GET(
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Terjadi kesalahan pada server' },
+      { error: 'Terjadi kesalahan pada server.' },
       { status: 500 }
     );
   }

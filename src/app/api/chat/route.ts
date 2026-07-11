@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { genAI } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase-server';
+import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 
-// Simple in-memory rate limit (per serverless instance) to protect the API key
-const WINDOW_MS = 60_000;
-const MAX_REQUESTS_PER_WINDOW = 10;
-const hits = new Map<string, number[]>();
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const windowHits = (hits.get(key) || []).filter((t) => now - t < WINDOW_MS);
-  if (windowHits.length >= MAX_REQUESTS_PER_WINDOW) {
-    hits.set(key, windowHits);
-    return true;
-  }
-  windowHits.push(now);
-  hits.set(key, windowHits);
-  return false;
-}
+// Rate limit: 10 chat messages per minute per client
+const rateLimit = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -26,8 +13,9 @@ interface ChatMessage {
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (isRateLimited(ip)) {
+    const ip = getClientIp(req);
+    const { limited } = rateLimit(ip);
+    if (limited) {
       return NextResponse.json(
         { error: 'Terlalu banyak permintaan. Coba lagi sebentar lagi.' },
         { status: 429 }

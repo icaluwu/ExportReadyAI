@@ -1,0 +1,23 @@
+{
+  "name": "ExportReady AI",
+  "short_name": "ExportReady",
+  "description": "Asisten ekspor virtual untuk UMKM Indonesia: skor kesiapan 0-100, rekomendasi negara tujuan, dan roadmap ekspor 4 fase.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/logo.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
