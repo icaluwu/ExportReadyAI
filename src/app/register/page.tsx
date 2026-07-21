@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,27 +44,44 @@ export default function RegisterPage() {
     },
   });
 
+  useEffect(() => {
+    async function checkSession() {
+      if (!supabase) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.push('/dashboard');
+      }
+    }
+    checkSession();
+  }, [router]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     setLastEmail(values.email);
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          full_name: values.fullName,
-          account_type: 'user',
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.fullName,
+            account_type: 'user',
+          },
+          emailRedirectTo: `${getSiteUrl()}/auth/callback`,
         },
-        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
-      },
-    });
+      });
 
-    if (error) {
-      toast.error(getFriendlyAuthErrorMessage(error));
+      if (error) {
+        toast.error(getFriendlyAuthErrorMessage(error));
+        setLoading(false);
+      } else {
+        toast.success('Pendaftaran berhasil! Silakan cek email Anda (inbox/spam) untuk verifikasi.');
+        router.push('/login');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
       setLoading(false);
-    } else {
-      toast.success('Pendaftaran berhasil! Silakan cek email Anda (inbox/spam) untuk verifikasi.');
-      router.push('/login');
     }
   }
 

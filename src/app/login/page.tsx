@@ -59,6 +59,18 @@ function LoginInner() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    async function checkSession() {
+      if (!isSupabaseConfigured()) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const nextPath = searchParams.get('next') || '/dashboard';
+        router.push(nextPath);
+      }
+    }
+    checkSession();
+  }, [router, searchParams]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!isSupabaseConfigured()) {
       toast.error(SUPABASE_CONFIG_ERROR);
@@ -66,18 +78,25 @@ function LoginInner() {
     }
     setLoading(true);
     setEmailForResend(values.email);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
 
-    if (error) {
-      toast.error(getFriendlyAuthErrorMessage(error));
+      if (error) {
+        toast.error(getFriendlyAuthErrorMessage(error));
+        setLoading(false);
+      } else {
+        toast.success('Login berhasil!');
+        // Force full page reload to ensure cookies are fresh and synced in middleware/server-components
+        const nextPath = searchParams.get('next') || '/dashboard';
+        window.location.href = nextPath;
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Terjadi kesalahan saat masuk. Silakan coba lagi.');
       setLoading(false);
-    } else {
-      toast.success('Login berhasil!');
-      router.push('/dashboard');
-      router.refresh();
     }
   }
 
