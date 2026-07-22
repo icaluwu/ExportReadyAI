@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, X, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ChatMessageContent } from '@/components/chat/ChatMessageContent';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -155,13 +156,15 @@ export function ChatPanel({ assessmentId }: { assessmentId?: string }) {
                 <div key={i} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
-                      'max-w-[85%] whitespace-pre-wrap rounded-2xl p-4 text-sm font-medium leading-relaxed',
+                      'max-w-[85%] rounded-2xl p-4 text-sm font-medium leading-relaxed',
                       m.role === 'user'
-                        ? 'rounded-br-sm bg-primary text-primary-foreground'
+                        ? 'whitespace-pre-wrap rounded-br-sm bg-primary text-primary-foreground'
                         : 'rounded-tl-sm bg-muted text-foreground'
                     )}
                   >
-                    {m.content || (
+                    {m.content ? (
+                      m.role === 'assistant' ? <ChatMessageContent content={m.content} /> : m.content
+                    ) : (
                       <span className="inline-flex items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" /> Sedang mengetik...
                       </span>
