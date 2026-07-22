@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { genAI } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase-server';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
+import { checkBotId } from 'botid/server';
 
 // Rate limit: 10 chat messages per minute per client
 const rateLimit = createRateLimiter({ endpoint: 'chat', maxRequests: 10, windowMs: 60_000 });
@@ -23,6 +24,11 @@ const ChatSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const { isBot } = await checkBotId({ advancedOptions: { checkLevel: 'basic' } });
+  if (isBot) {
+    return NextResponse.json({ error: 'Akses otomatis ditolak.' }, { status: 403 });
+  }
+
   try {
     const ip = getClientIp(req);
     const { limited } = await rateLimit(ip);

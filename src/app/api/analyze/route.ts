@@ -11,6 +11,7 @@ import {
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { maskFreeAiResult } from '@/lib/ai-result';
+import { checkBotId } from 'botid/server';
 
 // Rate limit: 5 assessments per minute per client (this is the most expensive endpoint)
 const rateLimit = createRateLimiter({ endpoint: 'analyze', maxRequests: 5, windowMs: 60_000 });
@@ -36,6 +37,11 @@ const AnalyzeSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const { isBot } = await checkBotId({ advancedOptions: { checkLevel: 'basic' } });
+  if (isBot) {
+    return NextResponse.json({ error: 'Akses otomatis ditolak.' }, { status: 403 });
+  }
+
   // ── Rate limit ──────────────────────────────────────────────
   const ip = getClientIp(req);
   const { limited } = await rateLimit(ip);

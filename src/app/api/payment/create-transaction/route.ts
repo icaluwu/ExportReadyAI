@@ -4,12 +4,18 @@ import { createClient } from '@/lib/supabase-server';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { getSnapClient } from '@/lib/midtrans';
 import { calculatePaymentTotal } from '@/lib/pricing';
+import { checkBotId } from 'botid/server';
 
 const TransactionSchema = z.object({
   plan_id: z.string().uuid(),
 });
 
 export async function POST(req: NextRequest) {
+  const { isBot } = await checkBotId({ advancedOptions: { checkLevel: 'basic' } });
+  if (isBot) {
+    return NextResponse.json({ error: 'Akses otomatis ditolak.' }, { status: 403 });
+  }
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

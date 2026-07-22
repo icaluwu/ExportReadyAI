@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { model } from '@/lib/gemini';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
+import { checkBotId } from 'botid/server';
 
 const HsCodeSchema = z.object({
   productName: z.string().trim().min(1).max(200),
@@ -13,6 +14,11 @@ const HsCodeSchema = z.object({
 const rateLimit = createRateLimiter({ endpoint: 'hs-code', maxRequests: 5, windowMs: 60_000 });
 
 export async function POST(req: NextRequest) {
+  const { isBot } = await checkBotId({ advancedOptions: { checkLevel: 'basic' } });
+  if (isBot) {
+    return NextResponse.json({ error: 'Akses otomatis ditolak.' }, { status: 403 });
+  }
+
   try {
     const ip = getClientIp(req);
     const { limited } = await rateLimit(ip);
