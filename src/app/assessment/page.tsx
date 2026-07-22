@@ -187,7 +187,10 @@ export default function AssessmentPage() {
       const result = await response.json();
       
       if (!response.ok) {
-        throw new Error(result.userMessage || 'Gagal mengirim assessment');
+        const validationMessage = result.details
+          ? Object.values(result.details).flat().find((message) => typeof message === 'string')
+          : null;
+        throw new Error(validationMessage || result.error || 'Gagal mengirim assessment');
       }
 
       clearInterval(messageInterval);

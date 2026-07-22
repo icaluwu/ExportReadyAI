@@ -27,7 +27,7 @@ const AnalyzeSchema = z.object({
   hasOnlinePresence: z.boolean().optional().nullable(),
   exportExperience: z.string().max(500),
   certifications: z.array(z.string().max(100)).default([]),
-  meetsInternationalStandards: z.boolean().optional().nullable(),
+  meetsInternationalStandards: z.string().min(1).max(100),
   hasTrademark: z.boolean().optional().nullable(),
   targetMarkets: z.array(z.string().max(100)).default([]),
   exportMotivation: z.string().max(1000).optional().nullable(),
