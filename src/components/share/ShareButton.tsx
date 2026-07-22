@@ -20,7 +20,7 @@ export function ShareButton({ assessmentId }: { assessmentId: string }) {
       if (!session?.user) return;
       const { data } = await supabase
         .from('assessments')
-        .select('user_id, share_token')
+        .select('user_id, share_token, share_token_expires_at')
         .eq('id', assessmentId)
         .maybeSingle();
       if (data?.user_id === session.user.id) {
@@ -40,7 +40,10 @@ export function ShareButton({ assessmentId }: { assessmentId: string }) {
     const token = crypto.randomUUID();
     const { error } = await supabase
       .from('assessments')
-      .update({ share_token: token })
+      .update({
+        share_token: token,
+        share_token_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
       .eq('id', assessmentId);
     setBusy(false);
     if (error) {
@@ -55,7 +58,7 @@ export function ShareButton({ assessmentId }: { assessmentId: string }) {
     setBusy(true);
     const { error } = await supabase
       .from('assessments')
-      .update({ share_token: null })
+      .update({ share_token: null, share_token_expires_at: null })
       .eq('id', assessmentId);
     setBusy(false);
     if (error) {

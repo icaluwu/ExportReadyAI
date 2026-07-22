@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Crown, Sparkles, Loader2, X, Copy, ExternalLink, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Check, Crown, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getSnapScriptUrl, isMidtransProduction } from '@/lib/midtrans-client-browser';
 import { toast } from 'sonner';
+import { calculatePaymentTotal } from '@/lib/pricing';
 
 interface Plan {
   id: string;
@@ -98,119 +99,37 @@ export function PricingSection() {
   const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pricingError, setPricingError] = useState(false);
   const [payingPlanId, setPayingPlanId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [manualTx, setManualTx] = useState<{ orderId: string; planName: string; priceIdr: number } | null>(null);
-  const [, setCopiedField] = useState<string | null>(null);
-
-  const bankName = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_BANK_NAME || 'Bank Central Asia (BCA)';
-  const accountNumber = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_ACCOUNT_NUMBER || '801234567890';
-  const accountName = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_ACCOUNT_NAME || 'PT Export Ready Indonesia';
-  const whatsappNumber = process.env.NEXT_PUBLIC_MANUAL_PAYMENT_WHATSAPP_NUMBER || '6281234567890';
 
   useEffect(() => {
     async function load() {
       try {
-        if (!isSupabaseConfigured()) {
-          console.warn('Supabase not configured, using fallback plans');
-          setPlans([
-            {
-              id: 'free',
-              name: 'free',
-              price_idr: 0,
-              features: ['assessment_basic'],
-              is_active: true,
-            },
-            {
-              id: 'premium_monthly',
-              name: 'premium_monthly',
-              price_idr: 99000,
-              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
-              is_active: true,
-            },
-            {
-              id: 'premium_yearly',
-              name: 'premium_yearly',
-              price_idr: 990000,
-              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
-              is_active: true,
-            },
-          ]);
-          return;
-        }
+        if (!isSupabaseConfigured()) throw new Error('Supabase belum dikonfigurasi');
 
         const { data: { session } } = await supabase.auth.getSession();
-        setIsLoggedIn(!!session);
+        setIsLoggedIn(Boolean(session));
 
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('subscription_plans')
           .select('id, name, price_idr, features, is_active')
           .eq('is_active', true)
           .order('price_idr', { ascending: true });
 
-        if (data && data.length > 0) {
-          setPlans(
-            data.map((p) => ({
-              ...p,
-              features: Array.isArray(p.features) ? p.features : [],
-            })),
-          );
-        } else {
-          // If query returned no plans, use default fallback plans
-          setPlans([
-            {
-              id: 'free',
-              name: 'free',
-              price_idr: 0,
-              features: ['assessment_basic'],
-              is_active: true,
-            },
-            {
-              id: 'premium_monthly',
-              name: 'premium_monthly',
-              price_idr: 99000,
-              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
-              is_active: true,
-            },
-            {
-              id: 'premium_yearly',
-              name: 'premium_yearly',
-              price_idr: 990000,
-              features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
-              is_active: true,
-            },
-          ]);
-        }
-      } catch (err) {
-        console.error('Error loading pricing plans:', err);
-        setPlans([
-          {
-            id: 'free',
-            name: 'free',
-            price_idr: 0,
-            features: ['assessment_basic'],
-            is_active: true,
-          },
-          {
-            id: 'premium_monthly',
-            name: 'premium_monthly',
-            price_idr: 99000,
-            features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
-            is_active: true,
-          },
-          {
-            id: 'premium_yearly',
-            name: 'premium_yearly',
-            price_idr: 990000,
-            features: ['roadmap_full', 'export_pdf', 'market_recommendations'],
-            is_active: true,
-          },
-        ]);
+        if (error || !data?.length) throw error || new Error('Paket aktif tidak ditemukan');
+        setPlans(data.map((plan) => ({
+          ...plan,
+          features: Array.isArray(plan.features) ? plan.features : [],
+        })));
+      } catch (error) {
+        console.error('Error loading pricing plans:', error);
+        setPricingError(true);
       } finally {
         setLoading(false);
       }
     }
-    load();
+    void load();
   }, []);
 
   const handleUpgrade = useCallback(
@@ -241,16 +160,6 @@ export function PricingSection() {
         }
 
         const orderId = data.order_id as string;
-
-        if (data.manual) {
-          setManualTx({
-            orderId,
-            planName: plan.name,
-            priceIdr: plan.price_idr,
-          });
-          setPayingPlanId(null);
-          return;
-        }
 
         await loadSnapScript();
 
@@ -291,6 +200,16 @@ export function PricingSection() {
     );
   }
 
+  if (pricingError) {
+    return (
+      <section id="pricing" className="py-24 bg-muted/30">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl font-black">Paket sementara tidak tersedia</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Silakan coba kembali beberapa saat lagi.</p>
+        </div>
+      </section>
+    );
+  }
   return (
     <section id="pricing" className="py-24 bg-muted/30">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -313,6 +232,7 @@ export function PricingSection() {
             const isFree = plan.name === 'free';
             const isPremium = !isFree;
             const isYearly = plan.name === 'premium_yearly';
+            const amount = calculatePaymentTotal(plan.price_idr);
 
             return (
               <motion.div
@@ -347,13 +267,13 @@ export function PricingSection() {
                     <div className="mt-4">
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-black text-foreground">
-                          {formatPrice(plan.price_idr)}
+                          {formatPrice(isFree ? 0 : amount.total)}
                         </span>
                         <span className="text-muted-foreground text-sm ml-1">{meta.period}</span>
                       </div>
                       {isPremium && (
                         <p className="text-[10px] text-muted-foreground mt-1 font-semibold italic leading-snug">
-                          *Belum termasuk pajak-pajak yang berlaku di Indonesia
+                          Termasuk PPN 11% (harga dasar {formatPrice(amount.subtotal)})
                         </p>
                       )}
                     </div>
@@ -407,160 +327,6 @@ export function PricingSection() {
         )}
       </div>
 
-      <AnimatePresence>
-        {manualTx && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-              onClick={() => setManualTx(null)}
-            />
-
-            {/* Modal Container */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-              className="relative bg-card border border-border shadow-2xl rounded-3xl p-6 md:p-8 max-w-lg w-full z-10 overflow-hidden"
-            >
-              <div className="absolute top-4 right-4">
-                <button
-                  onClick={() => setManualTx(null)}
-                  className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <Crown className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-foreground">Instruksi Pembayaran Manual</h3>
-                  <p className="text-xs text-muted-foreground">Selesaikan transfer bank untuk mengaktifkan akun Anda</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Cost Breakdown */}
-                <div className="bg-muted/40 rounded-2xl p-4 border border-border/55">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Rincian Pembayaran</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between font-medium">
-                      <span className="text-muted-foreground">Harga Paket ({manualTx.planName === 'premium_monthly' ? 'Premium Bulanan' : 'Premium Tahunan'})</span>
-                      <span className="text-foreground">Rp {manualTx.priceIdr.toLocaleString('id-ID')}</span>
-                    </div>
-                    <div className="flex justify-between font-medium">
-                      <span className="text-muted-foreground">PPN (11%)</span>
-                      <span className="text-foreground">Rp {Math.round(manualTx.priceIdr * 0.11).toLocaleString('id-ID')}</span>
-                    </div>
-                    <div className="border-t border-border/70 my-2 pt-2 flex justify-between items-center">
-                      <span className="font-bold text-foreground">Total Transfer</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-black text-primary">Rp {(manualTx.priceIdr + Math.round(manualTx.priceIdr * 0.11)).toLocaleString('id-ID')}</span>
-                        <button
-                          onClick={() => {
-                            const totalAmount = manualTx.priceIdr + Math.round(manualTx.priceIdr * 0.11);
-                            navigator.clipboard.writeText(totalAmount.toString());
-                            toast.success('Nominal transfer berhasil disalin!');
-                            setCopiedField('total');
-                            setTimeout(() => setCopiedField(null), 2000);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          title="Salin nominal transfer"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bank Details */}
-                <div className="bg-muted/40 rounded-2xl p-4 border border-border/55">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Tujuan Transfer</h4>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground font-medium">Bank</span>
-                      <span className="font-bold text-foreground">{bankName}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground font-medium">Nomor Rekening</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-foreground tracking-wider">{accountNumber}</span>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(accountNumber);
-                            toast.success('Nomor rekening berhasil disalin!');
-                            setCopiedField('rekening');
-                            setTimeout(() => setCopiedField(null), 2000);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          title="Salin nomor rekening"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground font-medium">Atas Nama</span>
-                      <span className="font-bold text-foreground">{accountName}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Steps */}
-                <div className="space-y-2.5">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Langkah Selanjutnya</h4>
-                  <ol className="text-xs space-y-2 text-muted-foreground list-decimal pl-4 font-semibold leading-relaxed">
-                    <li>Lakukan transfer dengan nominal yang <strong className="text-foreground">tepat</strong> ke rekening transfer di atas.</li>
-                    <li>Simpan bukti transfer Anda.</li>
-                    <li>Klik tombol <strong className="text-foreground">Konfirmasi via WhatsApp</strong> untuk mengirim bukti pembayaran ke Admin.</li>
-                    <li>Akses fitur lengkap akan diaktifkan dalam waktu <strong className="text-foreground">5-15 menit</strong> setelah verifikasi.</li>
-                  </ol>
-                </div>
-
-                {/* Alert */}
-                <div className="flex gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl p-3 text-xs font-medium">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <p>Mohon sebutkan nomor pesanan: <strong className="font-mono font-bold">{manualTx.orderId}</strong> saat melakukan konfirmasi WhatsApp.</p>
-                </div>
-
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    className="rounded-xl font-bold h-12 border-border"
-                    onClick={() => setManualTx(null)}
-                  >
-                    Tutup
-                  </Button>
-                  <Button
-                    asChild
-                    className="rounded-xl font-bold h-12 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
-                  >
-                    <a
-                      href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                        `Halo Admin ExportReady! Saya ingin melakukan konfirmasi pembayaran manual untuk berlangganan.\n\nDetail Transaksi:\n- Paket: ${manualTx.planName === 'premium_monthly' ? 'Premium Bulanan' : 'Premium Tahunan'}\n- No. Pesanan: ${manualTx.orderId}\n- Total Transfer: Rp ${(manualTx.priceIdr + Math.round(manualTx.priceIdr * 0.11)).toLocaleString('id-ID')}\n\nSaya melampirkan bukti transfer di bawah ini.`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Konfirmasi WhatsApp
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }

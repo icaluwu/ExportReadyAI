@@ -76,13 +76,11 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
 
   return (
     <div className="container relative mx-auto min-h-screen max-w-5xl px-4 py-12">
-      <div className="absolute -top-24 -right-24 -z-10 h-72 w-72 rounded-full bg-primary/8 blur-3xl" />
-      <div className="absolute -bottom-28 -left-24 -z-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
 
       {/* Shared banner */}
       <div className="mb-10 flex flex-col items-center text-center">
         <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-4 py-2 text-xs font-black uppercase tracking-widest text-primary shadow-sm">
-          <Globe2 className="h-4 w-4" /> Laporan Dibagikan — ExportReady AI
+          <Globe2 className="h-4 w-4" /> Laporan Dibagikan â€” ExportReady AI
         </span>
         <h1 className="mb-2 text-3xl font-black tracking-tight text-foreground md:text-4xl">
           Kesiapan Ekspor: {assessment.product_name}
@@ -90,7 +88,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
         <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Calendar className="h-4 w-4" />
           Dianalisis {new Date(assessment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-          <span className="hidden sm:inline">• Kategori {assessment.category}</span>
+          <span className="hidden sm:inline">â€¢ Kategori {assessment.category}</span>
         </p>
       </div>
 
@@ -209,7 +207,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
       <div className="mt-16 rounded-[2.5rem] bg-slate-900 p-10 text-center shadow-2xl md:p-14">
         <h3 className="mb-3 text-2xl font-black text-white md:text-3xl">Penasaran dengan kesiapan ekspor produk Anda?</h3>
         <p className="mx-auto mb-8 max-w-xl font-medium text-slate-400">
-          Dapatkan skor kesiapan, rekomendasi negara tujuan, dan roadmap 4 fase—gratis dan kurang dari 30 menit.
+          Dapatkan skor kesiapan, rekomendasi negara tujuan, dan roadmap 4 faseâ€”gratis dan kurang dari 30 menit.
         </p>
         <Button asChild size="lg" className="h-14 rounded-2xl bg-primary px-10 font-black shadow-lg">
           <Link href="/assessment">

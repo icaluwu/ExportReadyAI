@@ -53,8 +53,8 @@ export default async function BlogPage({
     .from('blog_posts')
     .select(`
       id, title, slug, excerpt, og_image_url, published_at, view_count,
-      category:blog_categories(id, name, slug, color),
-      author:profiles!blog_posts_author_id_fkey(username, full_name, avatar_url)
+      author_id,
+      category:blog_categories(id, name, slug, color)
     `)
     .eq('status', 'published')
     .order('published_at', { ascending: false });
@@ -68,10 +68,22 @@ export default async function BlogPage({
     query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`);
   }
 
-  const { data: posts } = await query.limit(24);
+  const { data: rawPosts } = await query.limit(24);
+  const authorIds = [...new Set((rawPosts ?? []).map((post) => post.author_id))];
+  const { data: authors } = authorIds.length
+    ? await supabase
+        .from('public_profiles')
+        .select('id, username, full_name, avatar_url')
+        .in('id', authorIds)
+    : { data: [] };
+  const authorsById = new Map((authors ?? []).map((author) => [author.id, author]));
+  const posts = (rawPosts ?? []).map((post) => ({
+    ...post,
+    author: authorsById.get(post.author_id) ?? null,
+  }));
 
-  const featuredPost = posts?.[0];
-  const restPosts = posts?.slice(1) ?? [];
+  const featuredPost = posts[0];
+  const restPosts = posts.slice(1);
 
   return (
     <>

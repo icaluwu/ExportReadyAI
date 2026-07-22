@@ -1,56 +1,63 @@
-/**
- * Fails the build early when required public env vars are missing.
- * Set SKIP_ENV_VALIDATION=true only for local experiments or partial builds.
- */
+import nextEnv from '@next/env';
 
-const skip = process.env.SKIP_ENV_VALIDATION === 'true'
+const { loadEnvConfig } = nextEnv;
+loadEnvConfig(process.cwd());
 
+const skip = process.env.SKIP_ENV_VALIDATION === 'true';
 if (skip) {
-  console.warn('[validate-env] SKIP_ENV_VALIDATION=true — skipping checks')
-  process.exit(0)
+  console.warn('[validate-env] SKIP_ENV_VALIDATION=true - skipping checks');
+  process.exit(0);
 }
 
 const required = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-]
+  'GEMINI_API_KEY',
+];
 
-const missing = required.filter((key) => !process.env[key]?.trim())
+const productionPayments =
+  process.env.VERCEL_ENV === 'production' ||
+  process.env.REQUIRE_PRODUCTION_PAYMENTS === 'true';
 
+if (productionPayments) {
+  required.push(
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'MIDTRANS_SERVER_KEY',
+    'MIDTRANS_CLIENT_KEY',
+    'NEXT_PUBLIC_MIDTRANS_CLIENT_KEY',
+  );
+}
+
+const missing = required.filter((key) => !process.env[key]?.trim());
 if (missing.length > 0) {
   console.error(
-    '\n[validate-env] Missing required environment variables:\n' +
-      missing.map((k) => `  - ${k}`).join('\n') +
-      '\n\nCopy .env.example to .env.local or set them in Vercel / Cloud Run.\n' +
-      'For Vercel: enable variables for Production AND Preview, then redeploy.\n',
-  )
-  process.exit(1)
+    '[validate-env] Missing required environment variables:\n' +
+      missing.map((key) => '  - ' + key).join('\n'),
+  );
+  process.exit(1);
 }
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-if (!url.startsWith('https://') || !url.includes('supabase')) {
-  console.warn(
-    '[validate-env] NEXT_PUBLIC_SUPABASE_URL does not look like a Supabase URL:',
-    url,
-  )
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+if (!supabaseUrl?.startsWith('https://') || !supabaseUrl.includes('supabase')) {
+  console.error('[validate-env] NEXT_PUBLIC_SUPABASE_URL is invalid');
+  process.exit(1);
 }
 
-if (!process.env.GEMINI_API_KEY?.trim()) {
-  console.warn(
-    '[validate-env] GEMINI_API_KEY is not set — AI assessment (/api/analyze) will fail at runtime.',
-  )
+if (productionPayments) {
+  if (
+    process.env.MIDTRANS_IS_PRODUCTION !== 'true' ||
+    process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION !== 'true'
+  ) {
+    console.error(
+      '[validate-env] Production deployments require both Midtrans production flags to be true',
+    );
+    process.exit(1);
+  }
+
+  if (process.env.MIDTRANS_CLIENT_KEY !== process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY) {
+    console.error('[validate-env] Server and public Midtrans client keys do not match');
+    process.exit(1);
+  }
 }
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
-  console.warn(
-    '[validate-env] SUPABASE_SERVICE_ROLE_KEY is not set — payment webhooks and admin writes will fail at runtime.',
-  )
-}
-
-if (!process.env.MIDTRANS_SERVER_KEY?.trim() || !process.env.MIDTRANS_CLIENT_KEY?.trim()) {
-  console.warn(
-    '[validate-env] MIDTRANS_SERVER_KEY / MIDTRANS_CLIENT_KEY not set — payment features will fail at runtime.',
-  )
-}
-
-console.log('[validate-env] OK')
+console.log('[validate-env] OK');

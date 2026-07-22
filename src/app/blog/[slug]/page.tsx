@@ -11,13 +11,12 @@ import {
   ArrowLeft,
   Share2,
   PenLine,
-  Instagram,
   Twitter,
   Linkedin,
-  Globe,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { sanitizeArticleHtml } from '@/lib/sanitize-html';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -75,18 +74,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .from('blog_posts')
     .select(`
       *,
-      category:blog_categories(id, name, slug, color),
-      author:profiles!blog_posts_author_id_fkey(
-        id, username, full_name, bio, avatar_url,
-        social_instagram, social_twitter, social_linkedin, social_website,
-        account_type
-      )
+      category:blog_categories(id, name, slug, color)
     `)
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
 
   if (!post) notFound();
+
+  const { data: author } = await supabase
+    .from('public_profiles')
+    .select('id, username, full_name, bio, avatar_url')
+    .eq('id', post.author_id)
+    .maybeSingle();
 
   // Increment view count (fire-and-forget)
   supabase.from('blog_posts').update({ view_count: (post.view_count || 0) + 1 }).eq('id', post.id).then(() => {});
@@ -101,9 +101,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .order('published_at', { ascending: false })
     .limit(3);
 
-  const author = post.author as any;
   const category = post.category as any;
   const readTime = estimateReadTime(post.content);
+  const safeContent = sanitizeArticleHtml(post.content);
+  const safeJsonLd = (value: unknown) => JSON.stringify(value).replaceAll('<', String.fromCharCode(92) + 'u003c');
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
   // Article JSON-LD
@@ -140,8 +141,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
 
       <div className="min-h-screen bg-white dark:bg-slate-900">
         {/* Hero */}
@@ -193,11 +194,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 </div>
                 <div>
                   <span className="font-black text-slate-700 dark:text-slate-300">{author?.full_name || 'Editor'}</span>
-                  {author?.account_type === 'editor' && (
-                    <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-black bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">
-                      <PenLine className="h-2.5 w-2.5" /> Editor
-                    </span>
-                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -241,7 +237,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 prose-blockquote:border-primary prose-blockquote:font-medium prose-blockquote:not-italic
                 prose-code:text-primary prose-code:bg-primary/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
                 prose-pre:bg-slate-900 prose-pre:rounded-2xl"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: safeContent }}
             />
 
             {/* Sidebar */}
@@ -255,34 +251,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   </div>
                   <h3 className="font-black text-slate-900 dark:text-slate-50 mb-0.5">{author?.full_name || 'Editor'}</h3>
                   {author?.username && <p className="text-xs text-slate-400 font-bold mb-2">@{author.username}</p>}
-                  {author?.account_type === 'editor' && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-black bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full mb-3">
-                      <PenLine className="h-3 w-3" /> Editor Terverifikasi
-                    </span>
-                  )}
                   {author?.bio && <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-3">{author.bio}</p>}
-                  <div className="flex items-center gap-2">
-                    {author?.social_instagram && (
-                      <a href={author.social_instagram} target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-pink-50 dark:hover:bg-pink-900/30 text-slate-400 hover:text-pink-500 transition-all">
-                        <Instagram className="h-4 w-4" />
-                      </a>
-                    )}
-                    {author?.social_twitter && (
-                      <a href={author.social_twitter} target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-400 hover:text-blue-500 transition-all">
-                        <Twitter className="h-4 w-4" />
-                      </a>
-                    )}
-                    {author?.social_linkedin && (
-                      <a href={author.social_linkedin} target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-400 hover:text-blue-700 transition-all">
-                        <Linkedin className="h-4 w-4" />
-                      </a>
-                    )}
-                    {author?.social_website && (
-                      <a href={author.social_website} target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 transition-all">
-                        <Globe className="h-4 w-4" />
-                      </a>
-                    )}
-                  </div>
                 </CardContent>
               </Card>
 

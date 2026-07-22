@@ -39,7 +39,7 @@ export function Footer() {
           </div>
         </div>
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-          <p>© 2024 ExportReady AI. Hak Cipta Dilindungi.</p>
+          <p>© {new Date().getFullYear()} ExportReady AI. Hak Cipta Dilindungi.</p>
           <div className="flex gap-6">
             <Link href="/kebijakan-privasi" className="hover:text-primary">Kebijakan Privasi</Link>
             <Link href="/syarat-ketentuan" className="hover:text-primary">Syarat & Ketentuan</Link>

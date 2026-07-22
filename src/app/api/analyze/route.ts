@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { model } from '@/lib/gemini';
 import { calculateReadinessScore } from '@/lib/scoring';
@@ -8,9 +9,11 @@ import {
   extractSourceTitles,
 } from '@/lib/rag';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
+import { createAdminClient } from '@/lib/supabase-admin';
+import { maskFreeAiResult } from '@/lib/ai-result';
 
 // Rate limit: 5 assessments per minute per client (this is the most expensive endpoint)
-const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 });
+const rateLimit = createRateLimiter({ endpoint: 'analyze', maxRequests: 5, windowMs: 60_000 });
 
 // Input validation schema — guards against crashes (e.g. undefined.certifications.join)
 const AnalyzeSchema = z.object({
@@ -29,12 +32,13 @@ const AnalyzeSchema = z.object({
   targetMarkets: z.array(z.string().max(100)).default([]),
   exportMotivation: z.string().max(1000).optional().nullable(),
   email: z.string().email().max(200).optional().nullable(),
+  privacyAccepted: z.literal(true),
 });
 
 export async function POST(req: NextRequest) {
   // ── Rate limit ──────────────────────────────────────────────
   const ip = getClientIp(req);
-  const { limited } = rateLimit(ip);
+  const { limited } = await rateLimit(ip);
   if (limited) {
     return NextResponse.json(
       { error: 'Terlalu banyak permintaan. Coba lagi sebentar lagi.' },
@@ -138,50 +142,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user session for ownership
     const { createClient: createServerClient } = await import('@/lib/supabase-server');
     const supabaseServer = await createServerClient();
     const { data: { user } } = await supabaseServer.auth.getUser();
 
-    // Save to Supabase
-    const { data: assessment, error } = await supabaseServer
+    let isPremium = false;
+    if (user?.id) {
+      const { getUserSubscriptionStatus, isPremiumUser } = await import('@/lib/subscription');
+      isPremium = isPremiumUser(await getUserSubscriptionStatus(user.id));
+    }
+
+    const accessToken = user ? null : randomUUID();
+    const admin = createAdminClient();
+    const { data: assessment, error } = await admin
       .from('assessments')
-      .insert([
-        {
-          product_name: data.productName,
-          category: data.category,
-          description: data.description,
-          hs_code: data.hsCode,
-          capacity: data.capacity,
-          capacity_unit: data.capacityUnit,
-          price: data.price,
-          has_online_presence: data.hasOnlinePresence,
-          export_experience: data.exportExperience,
-          certifications: data.certifications,
-          meets_international_standards: data.meetsInternationalStandards,
-          has_trademark: data.hasTrademark,
-          target_markets: data.targetMarkets,
-          export_motivation: data.exportMotivation,
-          email: data.email,
-          readiness_score: scoreBreakdown.totalScore,
-          score_breakdown: scoreBreakdown,
-          ai_result: aiResult,
-          status: 'completed',
-          user_id: user?.id || null, // Associate with user if logged in
-        },
-      ])
-      .select()
+      .insert({
+        product_name: data.productName,
+        category: data.category,
+        description: data.description,
+        hs_code: data.hsCode,
+        capacity: data.capacity,
+        capacity_unit: data.capacityUnit,
+        price: data.price,
+        has_online_presence: data.hasOnlinePresence,
+        export_experience: data.exportExperience,
+        certifications: data.certifications,
+        meets_international_standards: data.meetsInternationalStandards,
+        has_trademark: data.hasTrademark,
+        target_markets: data.targetMarkets,
+        export_motivation: data.exportMotivation,
+        email: data.email,
+        readiness_score: scoreBreakdown.totalScore,
+        score_breakdown: scoreBreakdown,
+        ai_result: aiResult,
+        status: 'completed',
+        user_id: user?.id ?? null,
+        share_token: accessToken,
+        share_token_expires_at: accessToken
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          : null,
+      })
+      .select('id')
       .single();
 
     if (error) {
       console.error('SUPABASE INSERT ERROR:', {
         message: error.message,
-        details: error.details,
-        hint: error.hint,
         code: error.code,
         tableName: 'assessments',
       });
-      // Sanitized message — no internal details to client
       return NextResponse.json(
         { error: 'Terjadi kendala saat menyimpan hasil assessment. Silakan coba lagi.' },
         { status: 500 },
@@ -191,8 +200,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       score: scoreBreakdown.totalScore,
       breakdown: scoreBreakdown,
-      aiResult: aiResult,
+      aiResult: isPremium ? aiResult : maskFreeAiResult(aiResult),
       assessmentId: assessment.id,
+      accessToken,
     });
   } catch (error) {
     console.error('CRITICAL API ERROR:', error);

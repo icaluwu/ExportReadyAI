@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { genAI } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase-server';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 
 // Rate limit: 10 chat messages per minute per client
-const rateLimit = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
+const rateLimit = createRateLimiter({ endpoint: 'chat', maxRequests: 10, windowMs: 60_000 });
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
+const ChatSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant']),
+      content: z.string().trim().min(1).max(2_000),
+    }),
+  ).min(1).max(21),
+  assessmentId: z.string().uuid().optional(),
+});
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
-    const { limited } = rateLimit(ip);
+    const { limited } = await rateLimit(ip);
     if (limited) {
       return NextResponse.json(
         { error: 'Terlalu banyak permintaan. Coba lagi sebentar lagi.' },
@@ -22,14 +33,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages, assessmentId } = (await req.json()) as {
-      messages: ChatMessage[];
-      assessmentId?: string;
-    };
-
-    if (!Array.isArray(messages) || messages.length === 0) {
+    const parsed = ChatSchema.safeParse(await req.json());
+    if (!parsed.success) {
       return NextResponse.json({ error: 'Pesan tidak valid.' }, { status: 400 });
     }
+    const { messages, assessmentId } = parsed.data;
 
     const lastMessage = messages[messages.length - 1];
     if (lastMessage.role !== 'user' || !lastMessage.content?.trim()) {

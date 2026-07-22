@@ -107,11 +107,12 @@ export default function EditorOnboardingPage() {
     }
     setLoading(true);
     try {
-      // Update profile to editor role
-      const { error } = await supabase
-        .from('profiles')
-        .update({ account_type: 'editor' })
-        .eq('id', user.id);
+      const { error } = await supabase.from('editor_applications').insert({
+        user_id: user.id,
+        status: 'pending',
+        disclaimer_accepted: true,
+        disclaimer_accepted_at: new Date().toISOString(),
+      });
 
       if (error) throw error;
 
@@ -303,7 +304,7 @@ export default function EditorOnboardingPage() {
                     {loading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <>Saya Setuju & Aktifkan Akun Editor <ArrowRight className="ml-2 h-4 w-4" /></>
+                      <>Saya Setuju & Ajukan Verifikasi <ArrowRight className="ml-2 h-4 w-4" /></>
                     )}
                   </Button>
                 </CardContent>
@@ -330,19 +331,19 @@ export default function EditorOnboardingPage() {
                     <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                   </motion.div>
 
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-slate-50 mb-3">Akun Editor Aktif!</h2>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-slate-50 mb-3">Pengajuan Terkirim</h2>
                   <p className="text-slate-500 dark:text-slate-400 mb-2 font-medium leading-relaxed">
-                    Selamat! Anda sekarang resmi terdaftar sebagai editor blog di ExportReady AI.
+                    Tim ExportReady AI akan meninjau pengajuan editor Anda.
                   </p>
                   <p className="text-slate-400 dark:text-slate-500 text-sm mb-8">
-                    Anda sekarang dapat mulai menulis, mengatur SEO, dan mempublikasikan artikel Anda.
+                    Akses editor tersedia setelah pengajuan disetujui administrator.
                   </p>
 
                   <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                     {[
                       { icon: ShieldCheck, label: 'Email Terverifikasi', color: 'text-blue-500' },
                       { icon: FileText, label: 'Disclaimer Disetujui', color: 'text-amber-500' },
-                      { icon: Star, label: 'Akun Editor Aktif', color: 'text-emerald-500' },
+                      { icon: Star, label: 'Menunggu Persetujuan', color: 'text-emerald-500' },
                     ].map(({ icon: Icon, label, color }) => (
                       <div key={label} className="flex flex-col items-center gap-1.5">
                         <div className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 ${color}`}>
@@ -355,14 +356,10 @@ export default function EditorOnboardingPage() {
 
                   <div className="flex flex-col gap-3">
                     <Button
-                      onClick={() => {
-                        router.push('/editor/dashboard');
-                        // Force layout update
-                        router.refresh();
-                      }}
+                      onClick={() => router.push('/dashboard')}
                       className="w-full h-12 font-black bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20"
                     >
-                      <PenLine className="mr-2 h-4 w-4" /> Mulai Menulis Artikel
+                      <PenLine className="mr-2 h-4 w-4" /> Kembali ke Dashboard
                     </Button>
                     <Button
                       variant="outline"

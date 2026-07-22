@@ -117,7 +117,9 @@ export default function ResultsPage() {
 
     async function fetchData() {
       try {
-        const response = await fetch(`/api/results/${id}`);
+        const token = new URLSearchParams(window.location.hash.slice(1)).get('token');
+        const endpoint = '/api/results/' + id + (token ? '?token=' + encodeURIComponent(token) : '');
+        const response = await fetch(endpoint, { cache: 'no-store' });
         if (response.status === 404) {
           // Keep loading if not found yet
           return;
@@ -163,9 +165,6 @@ export default function ResultsPage() {
 
   return (
     <div className="container relative mx-auto px-4 py-12 max-w-6xl min-h-screen">
-      {/* Background accents */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/8 rounded-full blur-3xl -z-10" />
-      <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl -z-10" />
 
       {/* Header - Non-printable */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">

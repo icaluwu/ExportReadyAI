@@ -29,7 +29,9 @@ export function verifyNotificationSignature(
     .update(orderId + statusCode + grossAmount + serverKey)
     .digest('hex');
 
-  return hash === signatureKey;
+  const expected = Buffer.from(hash, 'utf8');
+  const provided = Buffer.from(signatureKey, 'utf8');
+  return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
 }
 
 export function getSnapScriptUrl(): string {

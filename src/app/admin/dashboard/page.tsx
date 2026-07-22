@@ -123,10 +123,10 @@ export default function AdminDashboardPage() {
   // Promote / Demote User Role
   async function updateUserRole(userId: string, newRole: 'user' | 'editor' | 'admin') {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ account_type: newRole })
-        .eq('id', userId);
+      const { error } = await supabase.rpc('admin_update_user_role', {
+        p_user_id: userId,
+        p_role: newRole,
+      });
 
       if (error) throw error;
 

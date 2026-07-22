@@ -22,12 +22,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const formSchema = z.object({
   fullName: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
   email: z.string().email('Email tidak valid'),
   password: z.string().min(8, 'Password minimal 8 karakter'),
+  termsAccepted: z.boolean().refine(Boolean, 'Persetujuan wajib diberikan'),
 });
 
 export default function RegisterPage() {
@@ -41,6 +43,7 @@ export default function RegisterPage() {
       fullName: '',
       email: '',
       password: '',
+      termsAccepted: false,
     },
   });
 
@@ -184,6 +187,27 @@ export default function RegisterPage() {
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="termsAccepted"
+                  render={({ field }) => (
+                    <FormItem className="flex items-start gap-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => field.onChange(checked === true)}
+                          aria-label="Setujui kebijakan privasi dan syarat penggunaan"
+                        />
+                      </FormControl>
+                      <div className="space-y-1">
+                        <FormLabel className="text-xs font-medium leading-relaxed">
+                          Saya menyetujui <Link href="/kebijakan-privasi" className="font-bold text-primary underline">Kebijakan Privasi</Link> dan <Link href="/syarat-ketentuan" className="font-bold text-primary underline">Syarat & Ketentuan</Link>.
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
                 <Button
                   type="submit"
                   className="w-full h-11 font-black shadow-lg shadow-primary/15 bg-primary hover:bg-primary/95 transition-all active:scale-[0.98]"

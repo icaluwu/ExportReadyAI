@@ -12,6 +12,7 @@ import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
 import { isSupabaseConfigured, supabase, SUPABASE_CONFIG_ERROR, getFriendlyAuthErrorMessage } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { getSiteUrl } from '@/lib/site-url';
+import { getSafeNextPath } from '@/lib/safe-redirect';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -64,7 +65,7 @@ function LoginInner() {
       if (!isSupabaseConfigured()) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const nextPath = searchParams.get('next') || '/dashboard';
+        const nextPath = getSafeNextPath(searchParams.get('next'));
         router.push(nextPath);
       }
     }
@@ -91,8 +92,8 @@ function LoginInner() {
       } else {
         toast.success('Login berhasil!');
         // Force full page reload to ensure cookies are fresh and synced in middleware/server-components
-        const nextPath = searchParams.get('next') || '/dashboard';
-        window.location.href = nextPath;
+        const nextPath = getSafeNextPath(searchParams.get('next'));
+        window.location.assign(nextPath);
       }
     } catch (err: any) {
       toast.error(err?.message || 'Terjadi kesalahan saat masuk. Silakan coba lagi.');

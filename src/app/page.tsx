@@ -161,7 +161,7 @@ export default function LandingPage() {
             {[
               { label: "UMKM Indonesia", value: "64.2 Juta", sub: "Potensi pasar besar" },
               { label: "Kontribusi Ekspor", value: "Hanya 15%", sub: "Peluang pertumbuhan" },
-              { label: "Akurasi AI", value: "94.8%", sub: "Berdasarkan standar global" }
+              { label: "Analisis Terstruktur", value: "4 Fase", sub: "Roadmap siap ditindaklanjuti" }
             ].map((stat, i) => (
               <motion.div 
                 key={i}

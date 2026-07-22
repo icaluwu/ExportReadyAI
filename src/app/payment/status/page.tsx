@@ -17,21 +17,18 @@ function PaymentStatusContent() {
   const orderId = searchParams.get('order_id');
 
   const [status, setStatus] = useState<string>('pending');
-  const [loading, setLoading] = useState(true);
-  const [pollCount, setPollCount] = useState(0);
+  const [loading, setLoading] = useState(Boolean(orderId));
 
   useEffect(() => {
-    if (!orderId) {
-      setLoading(false);
-      return;
-    }
+    if (!orderId) return;
+    const safeOrderId = orderId;
 
     let cancelled = false;
-    let intervalId: ReturnType<typeof setInterval>;
+    let pollCount = 0;
 
     async function poll() {
       try {
-        const res = await fetch(`/api/payment/status/${orderId}`);
+        const res = await fetch('/api/payment/status/' + encodeURIComponent(safeOrderId));
         if (res.ok) {
           const data = await res.json();
           if (!cancelled) {
@@ -43,25 +40,18 @@ function PaymentStatusContent() {
           }
         }
       } catch {
-        // keep polling
+        // Keep polling until the retry budget is exhausted.
       }
 
-      if (!cancelled) {
-        setPollCount((c) => c + 1);
+      pollCount += 1;
+      if (!cancelled && pollCount >= MAX_POLLS) {
+        clearInterval(intervalId);
+        setLoading(false);
       }
     }
 
-    poll();
-    intervalId = setInterval(() => {
-      setPollCount((c) => {
-        if (c >= MAX_POLLS) {
-          clearInterval(intervalId);
-          setLoading(false);
-        }
-        return c;
-      });
-      poll();
-    }, POLL_INTERVAL_MS);
+    const intervalId = setInterval(poll, POLL_INTERVAL_MS);
+    void poll();
 
     return () => {
       cancelled = true;

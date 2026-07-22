@@ -71,6 +71,7 @@ const formSchema = z.object({
   targetMarkets: z.array(z.string()).min(1, 'Pilih minimal satu negara tujuan'),
   exportMotivation: z.string().optional(),
   email: z.string().email('Email tidak valid'),
+  privacyAccepted: z.boolean().refine(Boolean, 'Persetujuan kebijakan wajib diberikan'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -78,7 +79,7 @@ type FormValues = z.infer<typeof formSchema>;
 const DRAFT_KEY = 'exportready-assessment-draft';
 
 // Perkiraan sisa waktu pengisian per langkah
-const STEP_ETA = ['± 5 menit', '± 4 menit', '± 2 menit', '± 1 menit'];
+const STEP_ETA = ['Â± 5 menit', 'Â± 4 menit', 'Â± 2 menit', 'Â± 1 menit'];
 
 export default function AssessmentPage() {
   const [step, setStep] = useState(1);
@@ -117,6 +118,7 @@ export default function AssessmentPage() {
       targetMarkets: [],
       exportMotivation: '',
       email: '',
+      privacyAccepted: false,
     },
   });
 
@@ -190,7 +192,8 @@ export default function AssessmentPage() {
 
       clearInterval(messageInterval);
       localStorage.removeItem(DRAFT_KEY);
-      router.push(`/results/${result.assessmentId}`);
+      const tokenFragment = result.accessToken ? '#token=' + result.accessToken : '';
+      router.push('/results/' + result.assessmentId + tokenFragment);
     } catch (error: any) {
       clearInterval(messageInterval);
       setIsSubmitting(false);
@@ -294,9 +297,6 @@ export default function AssessmentPage() {
 
   return (
     <div className="container relative mx-auto px-4 py-10 max-w-4xl min-h-screen">
-      {/* Soft background accents */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/8 rounded-full blur-3xl -z-10" />
-      <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-accent/10 rounded-full blur-3xl -z-10" />
 
       <div className="mb-10 text-center">
         <motion.div
@@ -337,7 +337,7 @@ export default function AssessmentPage() {
           ))}
         </div>
         <p className="flex items-center justify-center gap-1.5 pt-4 text-xs font-medium text-muted-foreground/70">
-          <Save className="h-3 w-3" /> Jawaban tersimpan otomatis di perangkat ini—aman jika halaman tertutup.
+          <Save className="h-3 w-3" /> Jawaban tersimpan otomatis di perangkat iniâ€”aman jika halaman tertutup.
         </p>
       </div>
 
@@ -444,7 +444,7 @@ export default function AssessmentPage() {
                           </div>
                           {hsCandidates.length > 0 && (
                             <div className="mt-3 space-y-2 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                              <p className="text-xs font-black uppercase tracking-widest text-primary">Kandidat dari AI — klik untuk pakai</p>
+                              <p className="text-xs font-black uppercase tracking-widest text-primary">Kandidat dari AI â€” klik untuk pakai</p>
                               {hsCandidates.map((c) => (
                                 <button
                                   key={c.code}
@@ -796,6 +796,27 @@ export default function AssessmentPage() {
                           </FormControl>
                           <FormDescription className="text-muted-foreground/80 font-medium">Analisis akan dikirimkan ke email ini.</FormDescription>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="privacyAccepted"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-muted/30 p-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => field.onChange(checked === true)}
+                              aria-label="Setujui kebijakan privasi dan syarat penggunaan"
+                            />
+                          </FormControl>
+                          <div className="space-y-1">
+                            <FormLabel className="text-sm font-medium leading-relaxed">
+                              Saya menyetujui <a className="font-bold text-primary underline" href="/kebijakan-privasi" target="_blank" rel="noopener noreferrer">Kebijakan Privasi</a> dan <a className="font-bold text-primary underline" href="/syarat-ketentuan" target="_blank" rel="noopener noreferrer">Syarat & Ketentuan</a>.
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
                         </FormItem>
                       )}
                     />

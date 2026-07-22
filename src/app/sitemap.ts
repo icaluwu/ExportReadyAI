@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getServerSiteUrl } from '@/lib/site-url'
+import { createClient } from '@supabase/supabase-js'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getServerSiteUrl()
@@ -26,8 +27,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic blog posts — best-effort; never break the sitemap on DB failure.
   // Lazy-import so a missing/invalid env var doesn't crash the module at build.
   try {
-    const { createClient } = await import('@/lib/supabase-server')
-    const supabase = await createClient()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false } },
+    )
     const { data: posts } = await supabase
       .from('blog_posts')
       .select('slug, updated_at')
