@@ -1,0 +1,86 @@
+# ExportReadyAI GitLab CI/CD
+# GitHub + Vercel are the deployment source of truth (PRD §12.2).
+# This pipeline is a hard quality/security gate that runs on both
+# production (main) and development (dev) branches and on merge requests.
+
+stages:
+  - install
+  - quality
+  - security
+  - build
+
+variables:
+  CI: "true"
+  SKIP_ENV_VALIDATION: "true"
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - when: never
+
+default:
+  image: node:24
+  before_script:
+    - node --version
+    - npm --version
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - node_modules/
+    - .npm/
+    - .next/cache/
+
+install:
+  stage: install
+  script:
+    - npm ci
+  artifacts:
+    expire_in: 30 min
+    paths:
+      - node_modules/
+
+lint:
+  stage: quality
+  script:
+    - npm run lint
+    - npm run typecheck
+  needs:
+    - install
+
+test:
+  stage: quality
+  script:
+    - npm test
+    - npm run validate:migrations
+  needs:
+    - install
+
+audit:
+  stage: security
+  script:
+    - npm audit --omit=dev --audit-level=high
+
+build:
+  stage: build
+  script:
+    - npm run build
+  needs:
+    - install
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - .next/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
