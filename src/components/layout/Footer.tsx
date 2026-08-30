@@ -1,48 +1,89 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
+const PLATFORM_LINKS = [
+  { href: '/assessment', label: 'Cek Kesiapan Ekspor' },
+  { href: '/#features', label: 'Fitur Utama' },
+  { href: '/#pricing', label: 'Harga' },
+  { href: '/dashboard', label: 'Dashboard Riwayat' },
+];
+
+const RESOURCE_LINKS = [
+  { href: '/materi-belajar', label: 'Materi Belajar' },
+  { href: '/sertifikasi', label: 'Direktori Sertifikasi' },
+  { href: '/blog', label: 'Blog' },
+];
+
 export function Footer() {
   return (
-    <footer className="border-t bg-card/60 py-12">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div className="col-span-1 md:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <Image 
-                src="/logo.png" 
-                alt="ExportReady AI Logo" 
-                width={24} 
-                height={24} 
-              />
-              <span className="text-lg font-bold tracking-tight text-primary">ExportReady AI</span>
+    <footer className="border-t border-border bg-[var(--paper-alt)] py-14">
+      <div className="shell">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div>
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex size-8 items-center justify-center rounded-md bg-white ring-1 ring-border">
+                <Image src="/logo.png" alt="" width={20} height={20} />
+              </span>
+              <span className="font-heading text-base font-semibold tracking-tight">
+                ExportReady <span className="text-primary">AI</span>
+              </span>
             </Link>
-            <p className="text-sm text-muted-foreground max-w-xs">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               Membantu UMKM Indonesia naik kelas dan menembus pasar internasional dengan kekuatan AI.
             </p>
           </div>
+
           <div>
-            <h4 className="text-sm font-semibold mb-4 text-primary">Platform</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/assessment" className="hover:text-primary transition-colors">Cek Kesiapan Ekspor</Link></li>
-              <li><Link href="/#features" className="hover:text-primary transition-colors">Fitur Utama</Link></li>
-              <li><Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard Riwayat</Link></li>
-              <li><Link href="/materi-belajar" className="hover:text-primary transition-colors">Materi Belajar</Link></li>
-              <li><Link href="/sertifikasi" className="hover:text-primary transition-colors">Direktori Sertifikasi</Link></li>
+            <h4 className="eyebrow">Platform</h4>
+            <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+              {PLATFORM_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="transition-colors hover:text-foreground">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
+
           <div>
-            <h4 className="text-sm font-semibold mb-4 text-primary">Kontak</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="mailto:info@exportready.ai" className="hover:text-primary transition-colors">info@exportready.ai</a></li>
-              <li><span className="text-xs">Jakarta, Indonesia</span></li>
+            <h4 className="eyebrow">Sumber Belajar</h4>
+            <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+              {RESOURCE_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="transition-colors hover:text-foreground">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="eyebrow">Kontak</h4>
+            <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+              <li>
+                <a
+                  href="mailto:info@exportready.ai"
+                  className="transition-colors hover:text-foreground"
+                >
+                  info@exportready.ai
+                </a>
+              </li>
+              <li>Jakarta, Indonesia</li>
             </ul>
           </div>
         </div>
-        <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
+
+        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} ExportReady AI. Hak Cipta Dilindungi.</p>
           <div className="flex gap-6">
-            <Link href="/kebijakan-privasi" className="hover:text-primary">Kebijakan Privasi</Link>
-            <Link href="/syarat-ketentuan" className="hover:text-primary">Syarat & Ketentuan</Link>
+            <Link href="/kebijakan-privasi" className="transition-colors hover:text-foreground">
+              Kebijakan Privasi
+            </Link>
+            <Link href="/syarat-ketentuan" className="transition-colors hover:text-foreground">
+              Syarat &amp; Ketentuan
+            </Link>
           </div>
         </div>
       </div>

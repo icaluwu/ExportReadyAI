@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Check, Crown, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getSnapScriptUrl, isMidtransProduction } from '@/lib/midtrans-client-browser';
 import { toast } from 'sonner';
@@ -192,9 +191,9 @@ export function PricingSection() {
 
   if (loading) {
     return (
-      <section id="pricing" className="py-24">
-        <div className="container mx-auto px-4 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <section id="pricing" className="border-b border-border py-24">
+        <div className="shell flex justify-center">
+          <Loader2 className="size-7 animate-spin text-primary" />
         </div>
       </section>
     );
@@ -202,27 +201,29 @@ export function PricingSection() {
 
   if (pricingError) {
     return (
-      <section id="pricing" className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-black">Paket sementara tidak tersedia</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Silakan coba kembali beberapa saat lagi.</p>
+      <section id="pricing" className="border-b border-border py-24">
+        <div className="shell max-w-xl text-center">
+          <p className="eyebrow">Harga</p>
+          <h2 className="display-md mt-3">Paket sementara tidak tersedia</h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Silakan coba kembali beberapa saat lagi.
+          </p>
         </div>
       </section>
     );
   }
   return (
-    <section id="pricing" className="py-24 bg-muted/30">
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-black text-foreground mb-3">
-            Pilih Paket yang Sesuai
-          </h2>
-          <p className="text-muted-foreground font-medium max-w-2xl mx-auto">
+    <section id="pricing" className="border-b border-border py-20 sm:py-24">
+      <div className="shell">
+        <div className="max-w-2xl">
+          <p className="eyebrow">Harga</p>
+          <h2 className="display-lg mt-3">Pilih paket yang sesuai tahap bisnis Anda</h2>
+          <p className="lede mt-4">
             Mulai gratis, lalu buka fitur lengkap saat Anda siap ekspor lebih serius.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-12 grid grid-cols-1 border-t border-border md:grid-cols-3">
           {plans.map((plan, idx) => {
             const meta = PLAN_LABELS[plan.name] ?? {
               title: plan.name,
@@ -237,96 +238,92 @@ export function PricingSection() {
             return (
               <motion.div
                 key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] as const }}
+                className={`relative flex flex-col border-b border-border py-8 md:border-l md:px-8 md:first:border-l-0 md:first:pl-0 ${
+                  isYearly ? 'bg-[var(--paper-alt)]' : ''
+                }`}
               >
-                <Card
-                  className={`h-full rounded-3xl relative overflow-hidden ${
-                    isYearly
-                      ? 'border-primary shadow-xl shadow-primary/10 scale-[1.02]'
-                      : 'border-border/70'
-                  }`}
-                >
-                  {isYearly && (
-                    <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                      Paling Hemat
-                    </div>
-                  )}
-                  <CardHeader className="p-8 pb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      {isPremium ? (
-                        <Crown className="h-5 w-5 text-amber-500" />
-                      ) : (
-                        <Sparkles className="h-5 w-5 text-primary" />
-                      )}
-                      <CardTitle className="text-xl font-black">{meta.title}</CardTitle>
-                    </div>
-                    <CardDescription className="font-medium">{meta.subtitle}</CardDescription>
-                    <div className="mt-4">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-foreground">
-                          {formatPrice(isFree ? 0 : amount.total)}
-                        </span>
-                        <span className="text-muted-foreground text-sm ml-1">{meta.period}</span>
-                      </div>
-                      {isPremium && (
-                        <p className="text-[10px] text-muted-foreground mt-1 font-semibold italic leading-snug">
-                          Termasuk PPN 11% (harga dasar {formatPrice(amount.subtotal)})
-                        </p>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-8 pt-4">
-                    <ul className="space-y-3 mb-8">
-                      {(isFree
-                        ? ['assessment_basic']
-                        : ['assessment_basic', 'roadmap_full', 'export_pdf', 'market_recommendations']
-                      ).map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-sm">
-                          <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                          <span className="text-muted-foreground font-medium">
-                            {FEATURE_LABELS[feat] ?? feat}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                {isYearly && (
+                  <span className="absolute top-8 right-0 rounded-full bg-primary/8 px-3 py-1 text-[0.6875rem] font-semibold tracking-wide text-primary ring-1 ring-primary/15 md:right-8">
+                    Paling Hemat
+                  </span>
+                )}
 
-                    {isFree ? (
-                      <Button asChild className="w-full h-12 rounded-xl font-bold">
-                        <Link href="/assessment">Mulai Gratis</Link>
-                      </Button>
-                    ) : (
-                      <Button
-                        className="w-full h-12 rounded-xl font-bold"
-                        onClick={() => handleUpgrade(plan.id)}
-                        disabled={payingPlanId === plan.id}
-                      >
-                        {payingPlanId === plan.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Memproses...
-                          </>
-                        ) : (
-                          'Buka Fitur Lengkap'
-                        )}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                <div className="flex items-center gap-2">
+                  {isPremium ? (
+                    <Crown className="size-5 text-accent" />
+                  ) : (
+                    <Sparkles className="size-5 text-primary" />
+                  )}
+                  <h3 className="font-heading text-lg font-semibold">{meta.title}</h3>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{meta.subtitle}</p>
+
+                <div className="mt-6">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-heading text-[2rem] leading-none font-bold tracking-tight text-foreground">
+                      {formatPrice(isFree ? 0 : amount.total)}
+                    </span>
+                    <span className="text-sm text-muted-foreground">{meta.period}</span>
+                  </div>
+                  {isPremium && (
+                    <p className="mt-2 text-xs leading-snug text-muted-foreground">
+                      Termasuk PPN 11% (harga dasar {formatPrice(amount.subtotal)})
+                    </p>
+                  )}
+                </div>
+
+                <ul className="rule-t mt-6 space-y-3 pt-6">
+                  {(isFree
+                    ? ['assessment_basic']
+                    : ['assessment_basic', 'roadmap_full', 'export_pdf', 'market_recommendations']
+                  ).map((feat) => (
+                    <li key={feat} className="flex items-start gap-2.5 text-sm">
+                      <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span className="text-muted-foreground">
+                        {FEATURE_LABELS[feat] ?? feat}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8 pt-2">
+                  {isFree ? (
+                    <Button asChild size="cta" variant="outline" className="w-full">
+                      <Link href="/assessment">Mulai Gratis</Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="cta"
+                      className="w-full"
+                      onClick={() => handleUpgrade(plan.id)}
+                      disabled={payingPlanId === plan.id}
+                    >
+                      {payingPlanId === plan.id ? (
+                        <>
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                          Memproses...
+                        </>
+                      ) : (
+                        'Buka Fitur Lengkap'
+                      )}
+                    </Button>
+                  )}
+                </div>
               </motion.div>
             );
           })}
         </div>
 
         {!isMidtransProduction() && (
-          <p className="text-center text-xs text-muted-foreground mt-6">
+          <p className="mt-6 text-xs text-muted-foreground">
             Mode sandbox — pembayaran uji coba, bukan transaksi nyata.
           </p>
         )}
       </div>
-
     </section>
   );
 }
