@@ -24,7 +24,7 @@ export function getServerSiteUrl(): string {
     return `https://${stripTrailingSlash(host)}`
   }
 
-  return 'https://export-ready-ai.vercel.app'
+  return 'https://exportready.web.id'
 }
 
 function stripTrailingSlash(url: string): string {

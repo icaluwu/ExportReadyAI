@@ -20,15 +20,15 @@ Proyek ini dikembangkan dengan bantuan **Artificial Intelligence (AI) sebesar ±
 
 | Environment | Platform |
 |-------------|----------|
-| Prototype / preview | [Vercel](https://vercel.com) |
-| Production | [Google Cloud Run](https://cloud.google.com/run) |
+| Preview (`dev` + PR) | [Vercel](https://vercel.com) |
+| Production (`main`) | [Vercel](https://vercel.com) |
 
 - **Local setup**: copy [`.env.example`](.env.example) → `.env.local`, then `npm install && npm run dev`
 - **Vercel login issues**: [docs/VERCEL_CHECKLIST.md](docs/VERCEL_CHECKLIST.md)
-- **Full guide (Vercel + Cloud Run + Supabase)**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- **Full guide (Vercel + Supabase)**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
-Production URL (Vercel): `https://export-ready-ai.vercel.app`  
-Branch previews use `export-ready-ai-git-<branch>-<team>.vercel.app` — this is normal Vercel behavior.
+Production URL (Vercel): `https://exportready.web.id`  
+Branch previews use `<project>-git-<branch>-misifits.vercel.app` — this is normal Vercel behavior.
 
 ## 💡 Manfaat & Kegunaan
 1. **Self-Assessment**: Mengetahui kelemahan dan kekuatan produk untuk pasar ekspor.

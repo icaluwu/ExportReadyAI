@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 import { withBotId } from "botid/next/config";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   async headers() {
     const csp = [
       "default-src 'self'",

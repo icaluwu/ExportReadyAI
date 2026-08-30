@@ -1,198 +1,78 @@
 # Deployment Guide — ExportReady AI
 
-Arsitektur hosting:
+Arsitektur hosting **Vercel-only** (PRD §11, prinsip P5). GitLab adalah mirror + CI gate; deployment dan CI produksi dikunci ke GitHub `main`.
 
-| Environment | Platform | URL pattern |
-|-------------|----------|-------------|
+| Environment | Platform | URL |
+|-------------|----------|-----|
 | Local | `npm run dev` | `http://localhost:3000` |
-| Prototype | Vercel | `export-ready-ai.vercel.app` (production) atau `export-ready-ai-git-<branch>-<team>.vercel.app` (branch) |
-| Production | Google Cloud Run | `https://<service>-xxxxx-<region>.run.app` |
+| Preview (`dev` + PR) | Vercel | `https://<project>-git-<branch>-misifits.vercel.app` |
+| Production (`main`) | Vercel | `https://exportready.web.id` |
 
 ---
 
-## 1. Environment variables
+## 1. Branch & deployment
 
-Copy [`.env.example`](../.env.example) to `.env.local` for local development.
+Strategi branch mengikuti PRD §12.1:
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon (public) key |
-| `NEXT_PUBLIC_SITE_URL` | Recommended | Auth redirect base; auto from `VERCEL_URL` on Vercel when unset in browser |
-| `GEMINI_API_KEY` | Yes for AI | Server-only; `/api/analyze` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes (payments, admin writes) | Server-only; required for payment webhook + admin queries |
-| `MIDTRANS_SERVER_KEY` | Yes (payments) | Server-only |
-| `MIDTRANS_CLIENT_KEY` | Yes (payments) | Server-only; used by server Snap client init in this repo |
-| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Yes (payments) | Public client key for Snap.js script tag |
-| `MIDTRANS_IS_PRODUCTION` | Recommended | `true` for live transactions, `false` for sandbox |
-| `NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION` | Recommended | Keep in sync with `MIDTRANS_IS_PRODUCTION` |
+- `main` = **Production** → Vercel Production Deployment → `exportready.web.id`
+- `dev` = **Development / integrasi** → Vercel Preview Deployment otomatis
+- Rilis = PR `dev` → `main` (bukan push langsung ke `main`)
 
-Build runs `scripts/validate-env.mjs` and **fails** if Supabase vars are missing. Override only for experiments:
-
-```bash
-SKIP_ENV_VALIDATION=true npx next build
+```
+feat/x ──┐
+fix/y   ──┼──► dev ──(PR rilis)──► main ──► exportready.web.id
+chore/z ──┘       │
+                  └─ Preview URL
 ```
 
----
+## 2. Environment variables
 
-## 2. Vercel (prototype)
+Salin [`.env.example`](../.env.example) ke `.env.local` untuk pengembangan lokal.
 
-### 2.1 Why the domain “changed”
+| Variable | Wajib | Scope | Catatan |
+|----------|-------|-------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | selalu | publik | Project `vpkfogomhadefnyhrcgv` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | selalu | publik | — |
+| `SUPABASE_SERVICE_ROLE_KEY` | production | **server only** | Jangan diprefiks `NEXT_PUBLIC_` |
+| `GEMINI_API_KEY` | selalu | server only | `/api/analyze`, `/api/chat`, `/api/hs-code` |
+| `MIDTRANS_SERVER_KEY` | production | server only | Signature sha512 webhook |
+| `MIDTRANS_CLIENT_KEY` | production | server only | Harus identik dengan versi publik |
+| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | production | publik | Snap.js |
+| `MIDTRANS_IS_PRODUCTION` | production | server only | `true` saat live |
+| `NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION` | production | publik | Sinkron dengan var server |
+| `NEXT_PUBLIC_SITE_URL` | selalu | publik | `https://exportready.web.id` di production |
+| `REQUIRE_PRODUCTION_PAYMENTS` | opsional | server only | Validasi ketat di preview |
 
-Vercel assigns different URLs per deployment type:
+Build menjalankan `scripts/validate-env.mjs` dan **gagal** jika var Supabase hilang. Jangan set `SKIP_ENV_VALIDATION` di Vercel (khusus CI).
 
-- **Production**: `https://export-ready-ai.vercel.app`
-- **Branch (e.g. main)**: `https://export-ready-ai-git-main-<team>.vercel.app`
-- **PR preview**: `https://export-ready-ai-git-<branch>-<team>.vercel.app`
+### Scoping di Vercel (PRD §12.3)
 
-Opening a branch URL is expected — not a broken domain.
+- *Semua* var milik production → Production + Preview.
+- `SUPABASE_SERVICE_ROLE_KEY` → Production + Preview (tidak untuk development lokal).
+- Midtrans **production keys** → Production **hanya**. Preview memakai **sandbox keys**.
+- `NEXT_PUBLIC_SITE_URL` → Production `https://exportready.web.id`; Preview memakai URL preview otomatis.
 
-### 2.2 Fix “Failed to fetch” on login
+## 3. Men-deploy
 
-Login calls Supabase from the browser. **“Failed to fetch”** almost always means env vars were missing at **build** time for that deployment.
+1. Project Vercel sudah terhubung ke repo GitHub `icaluwu/ExportReadyAI`.
+2. **Production Branch = `main`**, `Install Command = npm ci`, `Node = 24`.
+3. Set environment variables per §12.3 di Vercel (Settings → Environment Variables).
+4. PR `dev` → `main`. Saat di-merge, Vercel me-deploy `main` ke production.
+5. Set domain `exportready.web.id` sebagai production domain + redirect `www`.
 
-1. Vercel → **export-ready-ai** → **Settings → Environment Variables**
-2. Add (or verify) for **Production** and **Preview**:
+## 4. Webhook Midtrans
 
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_SITE_URL` (optional on preview — browser uses current origin; set if email redirects misbehave)
-   - `GEMINI_API_KEY`
+Buka halaman Midtrans → Settings → Configuration → Payment Notification URL:
 
-3. **Redeploy** (Deployments → … → Redeploy) so the build embeds `NEXT_PUBLIC_*` values.
+- **Sandbox** → preview stabil `dev` (mis. `https://dev.exportready.web.id/api/payment/notification`)
+- **Production** → `https://exportready.web.id/api/payment/notification`
 
-4. DevTools → **Network**: failed login should hit `https://<project>.supabase.co`, not `undefined`.
+## 5. Status & verifikasi
 
-5. **Supabase** → Authentication → URL configuration:
-   - **Site URL**: production URL (Vercel prod or Cloud Run)
-   - **Redirect URLs** (add each host you use):
+- Health check: `GET /api/health` → `{ status: "ok" }`
+- `GET /pricing` → `308` menuju `/harga`
+- `GET /api/payment/notification` hanya menerima signature valid (pay-6)
 
-     ```
-     https://export-ready-ai.vercel.app/**
-     https://export-ready-ai-git-main-misifits.vercel.app/**
-     http://localhost:3000/**
-     https://*.vercel.app/**
-     ```
+## 6. Rollback
 
-     Wildcard `*.vercel.app` simplifies preview branches.
-
-### 2.3 Sync env locally
-
-```bash
-npx vercel link
-npx vercel env pull .env.local
-```
-
----
-
-## 3. Google Cloud Run (production)
-
-### 3.1 One-time GCP setup
-
-```bash
-chmod +x scripts/gcp-setup.sh
-./scripts/gcp-setup.sh YOUR_GCP_PROJECT_ID
-```
-
-Creates Artifact Registry, enables APIs, grants Cloud Build deploy permissions, and documents `GEMINI_API_KEY` in Secret Manager.
-
-Add the Gemini secret:
-
-```bash
-echo -n 'YOUR_GEMINI_KEY' | gcloud secrets versions add GEMINI_API_KEY --data-file=-
-```
-
-### 3.2 First manual deploy
-
-```bash
-export PROJECT_ID=YOUR_GCP_PROJECT_ID
-export REGION=asia-southeast2
-export SERVICE=exportready-prod
-export AR_REPO=exportready
-
-# Build & push (set your real Supabase values)
-gcloud builds submit --tag "${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE}:manual" \
-  --project="$PROJECT_ID" \
-  --substitutions=.
-
-# Or local Docker:
-docker build \
-  --build-arg NEXT_PUBLIC_SUPABASE_URL="https://YOUR.supabase.co" \
-  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key" \
-  --build-arg NEXT_PUBLIC_SITE_URL="https://placeholder.run.app" \
-  -t exportready:local .
-
-docker run -p 8080:8080 \
-  -e GEMINI_API_KEY=your-key \
-  -e NEXT_PUBLIC_SUPABASE_URL=... \
-  -e NEXT_PUBLIC_SUPABASE_ANON_KEY=... \
-  -e NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
-  exportready:local
-```
-
-Deploy to Cloud Run:
-
-```bash
-gcloud run deploy "$SERVICE" \
-  --image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE}:manual" \
-  --region="$REGION" \
-  --allow-unauthenticated \
-  --port=8080 \
-  --memory=1Gi \
-  --timeout=300 \
-  --set-env-vars="NEXT_PUBLIC_SUPABASE_URL=...,NEXT_PUBLIC_SUPABASE_ANON_KEY=...,NEXT_PUBLIC_SITE_URL=https://YOUR-SERVICE-url.run.app" \
-  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest"
-```
-
-After the first deploy, copy the service URL, set `NEXT_PUBLIC_SITE_URL` to that URL, **rebuild and redeploy**, then add the URL to Supabase redirect URLs.
-
-Health check: `GET /api/health` → `{ "ok": true, "supabase": true }`.
-
-### 3.3 Cloud Build CI
-
-[`cloudbuild.yaml`](../cloudbuild.yaml) builds the image and deploys Cloud Run.
-
-Create a trigger (Console → Cloud Build → Triggers) on branch `main` with substitutions:
-
-- `_NEXT_PUBLIC_SUPABASE_URL`
-- `_NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `_NEXT_PUBLIC_SITE_URL` (Cloud Run production URL)
-
-CLI example:
-
-```bash
-gcloud builds submit --config=cloudbuild.yaml \
-  --substitutions=_NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co,_NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...,_NEXT_PUBLIC_SITE_URL=https://exportready-prod-xxxxx-as.a.run.app
-```
-
-### 3.4 Rollback
-
-```bash
-gcloud run revisions list --service=exportready-prod --region=asia-southeast2
-gcloud run services update-traffic exportready-prod \
-  --region=asia-southeast2 \
-  --to-revisions=exportready-prod-00042-abc=100
-```
-
-### 3.5 Troubleshooting Cloud Run
-
-| Symptom | Check |
-|---------|--------|
-| Login “Failed to fetch” | Env vars on service; rebuild image if `NEXT_PUBLIC_*` changed |
-| 502 / container exit | Logs: `gcloud run services logs read exportready-prod --region=asia-southeast2` |
-| AI assessment fails | `GEMINI_API_KEY` secret mounted; `gcloud secrets versions list GEMINI_API_KEY` |
-| Auth redirect error | Supabase redirect URLs include exact Cloud Run URL + `/auth/callback` |
-
----
-
-## 4. Checklist before go-live
-
-- [ ] Vercel Preview + Production env vars set and redeployed
-- [ ] Cloud Run `NEXT_PUBLIC_SITE_URL` matches live `*.run.app` URL
-- [ ] Supabase redirect URLs include Vercel + Cloud Run + localhost
-- [ ] `GEMINI_API_KEY` in Vercel and Secret Manager (Cloud Run)
-- [ ] `/api/health` returns `ok: true` on production
-- [ ] Test login, register, assessment, results on both hosts
-- [ ] Midtrans env vars set on the deployed environment and redeployed
-- [ ] Midtrans Dashboard: set **Payment Notification URL** to `https://<YOUR_DOMAIN>/api/payment/notification`
-- [ ] Midtrans set to **Production** only when you are ready to accept real money (and `*_IS_PRODUCTION=true`)
+Vercel → Deployments → pilih deployment → ⋯ → Promote to Production / Rollback.

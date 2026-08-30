@@ -3,7 +3,7 @@ name: Production checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 permissions:
   contents: read
@@ -27,3 +27,9 @@ jobs:
         env:
           SKIP_ENV_VALIDATION: 'true'
       - run: npm audit --omit=dev --audit-level=high
+
+  migration-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/check-migrations-order.mjs
