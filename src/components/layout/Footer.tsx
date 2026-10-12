@@ -13,6 +13,7 @@ export function Footer() {
                 alt="ExportReady AI Logo" 
                 width={24} 
                 height={24} 
+                unoptimized
               />
               <span className="text-lg font-bold tracking-tight text-primary">ExportReady AI</span>
             </Link>

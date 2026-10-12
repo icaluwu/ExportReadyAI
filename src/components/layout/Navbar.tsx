@@ -14,6 +14,7 @@ export function Navbar() {
               alt="ExportReady AI Logo"
               width={32}
               height={32}
+              unoptimized
             />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
