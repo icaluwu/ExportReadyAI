@@ -1,0 +1,17 @@
+name: exportready-ai-preview
+kind: wasmer.io/App.v1
+package: .
+dependencies:
+  - wasmer/winterjs@^0.3.4
+commands:
+  - name: script
+    module: wasmer/winterjs:winterjs
+    runner: wasi
+    annotations:
+      wasi:
+        main-args:
+          - --mode
+          - cloudflare
+          - /web
+fs:
+  /web: .vercel/output/static

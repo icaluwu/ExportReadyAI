@@ -148,8 +148,8 @@ export default function StudyMaterialPage() {
                  <h4 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Sudah Siap Melangkah Lebih Jauh?</h4>
                  <p className="text-slate-500 font-medium mb-8">Dapatkan konsultasi mendalam untuk strategi ekspor produk Anda bersama pakar kami.</p>
                  <Button asChild className="h-16 px-10 rounded-2xl font-black text-lg bg-primary gap-3 shadow-xl shadow-primary/20">
-                    <Link href="https://icaluwu.space/" target="_blank">
-                      <Zap className="h-6 w-6" /> Konsultasi Pakar Sekarang
+                    <Link href="/harga">
+                      <Zap className="h-6 w-6" /> Lihat Paket Pendampingan
                     </Link>
                  </Button>
                </div>

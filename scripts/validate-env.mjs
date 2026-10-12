@@ -12,11 +12,20 @@ if (skip) {
 const required = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-  'GEMINI_API_KEY',
 ];
+
+const hasAiProviderKey = Boolean(process.env.AI_PROVIDER_API_KEY?.trim());
+const hasLegacyAiKey = Boolean(process.env.GEMINI_API_KEY?.trim());
+
+if (!hasAiProviderKey && !hasLegacyAiKey) {
+  required.push('AI_PROVIDER_API_KEY', 'GEMINI_API_KEY');
+} else if (!hasAiProviderKey && hasLegacyAiKey) {
+  console.warn('[validate-env] AI_PROVIDER_API_KEY is missing; falling back to legacy GEMINI_API_KEY.');
+}
 
 const productionPayments =
   process.env.VERCEL_ENV === 'production' ||
+  process.env.NETLIFY_CONTEXT === 'production' ||
   process.env.REQUIRE_PRODUCTION_PAYMENTS === 'true';
 
 if (productionPayments) {

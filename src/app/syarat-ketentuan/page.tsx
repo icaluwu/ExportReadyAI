@@ -59,7 +59,7 @@ export default function TermsPage() {
             <h2 className="font-black text-foreground">8. Kontak</h2>
             <p className="mt-2 text-sm font-medium text-muted-foreground">
               Pertanyaan mengenai layanan dapat dikirim ke{' '}
-              <a className="font-bold text-primary underline" href="mailto:info@exportready.ai">info@exportready.ai</a>.
+              <a className="font-bold text-primary underline" href="mailto:info@exportready.web.id">info@exportready.web.id</a>.
             </p>
           </section>
         </div>

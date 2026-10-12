@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { model } from '@/lib/gemini';
 import { calculateReadinessScore } from '@/lib/scoring';
 import {
   searchRegulations,
@@ -12,6 +11,7 @@ import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { maskFreeAiResult } from '@/lib/ai-result';
 import { checkBotId } from 'botid/server';
+import { aiClient, aiModel } from '@/lib/ai-client';
 
 // Rate limit: 5 assessments per minute per client (this is the most expensive endpoint)
 const rateLimit = createRateLimiter({ endpoint: 'analyze', maxRequests: 5, windowMs: 60_000 });
@@ -119,20 +119,23 @@ export async function POST(req: NextRequest) {
       "motivationalNote": "1 kalimat motivasi personal"
     }`;
 
-    // Call Gemini
+    // Call AI provider
     let aiResult = null;
     try {
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-      const result = await model.generateContent(fullPrompt);
-      const response = await result.response;
-      const text = response.text();
+      const completion = await aiClient.chat.completions.create({
+        model: aiModel,
+        messages: [{ role: 'user', content: fullPrompt }],
+      });
+
+      const text = completion.choices?.[0]?.message?.content || '';
 
       // Extract JSON from response (handling potential markdown code blocks)
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       aiResult = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
 
       if (!aiResult) {
-        console.error('Gemini returned invalid format:', text);
+        console.error('AI provider returned invalid format:', text);
         throw new Error('Format respon AI tidak valid');
       }
 
@@ -140,7 +143,7 @@ export async function POST(req: NextRequest) {
         aiResult.regulationSources = regulationSources;
       }
     } catch (aiError) {
-      console.error('Gemini API Error Detail:', aiError);
+      console.error('AI Provider Error Detail:', aiError);
       // Sanitized: do not leak internal error detail to client
       return NextResponse.json(
         { error: 'Gagal mendapatkan respon dari AI. Silakan coba lagi.' },

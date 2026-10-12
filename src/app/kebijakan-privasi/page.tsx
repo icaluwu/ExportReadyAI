@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="font-black text-foreground">7. Kontak dan perubahan kebijakan</h2>
             <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground">
               Untuk pertanyaan atau permintaan terkait data, hubungi{' '}
-              <a className="font-bold text-primary underline" href="mailto:info@exportready.ai">info@exportready.ai</a>.
+              <a className="font-bold text-primary underline" href="mailto:info@exportready.web.id">info@exportready.web.id</a>.
               Perubahan material akan ditampilkan pada halaman ini. Penggunaan layanan juga tunduk pada{' '}
               <Link className="font-bold text-primary underline" href="/syarat-ketentuan">Syarat & Ketentuan</Link>.
             </p>

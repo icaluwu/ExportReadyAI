@@ -136,7 +136,7 @@ export function PricingSection() {
     async (planId: string) => {
       if (!isLoggedIn) {
         toast.info('Silakan login dulu untuk melanjutkan pembayaran');
-        router.push('/login?next=/#pricing');
+        router.push('/login?next=/harga');
         return;
       }
 

@@ -1,6 +1,6 @@
 /**
  * Canonical site URL for auth redirects and server-side metadata.
- * Browser: prefers window.origin. Server: env, then Vercel, then fallback.
+ * Browser: prefers window.origin. Server: env, then hosting preview URL, then fallback.
  */
 export function getSiteUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
@@ -23,6 +23,11 @@ export function getServerSiteUrl(): string {
     const host = vercelUrl.replace(/^https?:\/\//, '')
     return `https://${stripTrailingSlash(host)}`
   }
+
+  const netlifyUrl =
+    process.env.DEPLOY_PRIME_URL?.trim() ||
+    process.env.DEPLOY_URL?.trim()
+  if (netlifyUrl) return stripTrailingSlash(netlifyUrl)
 
   return 'https://exportready.web.id'
 }

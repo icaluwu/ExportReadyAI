@@ -24,6 +24,8 @@ export function Footer() {
             <h4 className="text-sm font-semibold mb-4 text-primary">Platform</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/assessment" className="hover:text-primary transition-colors">Cek Kesiapan Ekspor</Link></li>
+              <li><Link href="/harga" className="hover:text-primary transition-colors">Harga & Paket</Link></li>
+              <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
               <li><Link href="/#features" className="hover:text-primary transition-colors">Fitur Utama</Link></li>
               <li><Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard Riwayat</Link></li>
               <li><Link href="/materi-belajar" className="hover:text-primary transition-colors">Materi Belajar</Link></li>
@@ -33,8 +35,9 @@ export function Footer() {
           <div>
             <h4 className="text-sm font-semibold mb-4 text-primary">Kontak</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="mailto:info@exportready.ai" className="hover:text-primary transition-colors">info@exportready.ai</a></li>
-              <li><span className="text-xs">Jakarta, Indonesia</span></li>
+              <li><a href="mailto:info@exportready.web.id" className="hover:text-primary transition-colors">info@exportready.web.id</a></li>
+              <li><Link href="/hubungi-kami" className="hover:text-primary transition-colors">Hubungi kami</Link></li>
+              <li><span className="text-xs">Layanan perorangan, Indonesia</span></li>
             </ul>
           </div>
         </div>

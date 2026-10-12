@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s | ExportReady AI",
   },
   description:
-    "Asisten ekspor virtual untuk UMKM Indonesia: skor kesiapan 0-100, rekomendasi 3 negara tujuan, dan roadmap ekspor 4 fase—gratis, 24/7.",
+    "Asisten ekspor virtual untuk UMKM Indonesia: skor kesiapan 0-100, rekomendasi pasar, dan roadmap ekspor yang bisa ditindaklanjuti.",
   keywords: [
     "ekspor",
     "UMKM",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     siteName: "ExportReady AI",
     title: "ExportReady AI | Cek Kesiapan Ekspor UMKM Anda",
     description:
-      "Skor kesiapan ekspor 0-100, rekomendasi 3 negara tujuan, dan roadmap 4 fase dalam Bahasa Indonesia—kurang dari 30 menit.",
+      "Skor kesiapan ekspor 0-100, rekomendasi pasar, dan roadmap ekspor dalam Bahasa Indonesia—kurang dari 30 menit.",
     images: [
       {
         url: "/og-image.png",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ExportReady AI | Cek Kesiapan Ekspor UMKM Anda",
     description:
-      "Skor kesiapan ekspor 0-100, rekomendasi 3 negara tujuan, dan roadmap 4 fase untuk UMKM—gratis, 24/7.",
+      "Skor kesiapan ekspor 0-100, rekomendasi pasar, dan roadmap ekspor untuk UMKM.",
     images: ["/og-image.png"],
   },
   icons: {

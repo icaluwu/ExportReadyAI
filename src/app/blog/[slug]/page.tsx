@@ -22,11 +22,6 @@ interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
 }
 
-function estimateReadTime(content: string): number {
-  const words = content.split(/\s+/).length;
-  return Math.max(1, Math.ceil(words / 200));
-}
-
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
@@ -88,8 +83,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .eq('id', post.author_id)
     .maybeSingle();
 
-  // Increment view count (fire-and-forget)
-  supabase.from('blog_posts').update({ view_count: (post.view_count || 0) + 1 }).eq('id', post.id).then(() => {});
+  const { error: viewError } = await supabase.rpc('increment_post_view', { post_id: post.id });
+  if (viewError) {
+    console.error('Failed to increment blog post view count', viewError);
+  }
 
   // Fetch related posts
   const { data: related } = await supabase
@@ -101,8 +98,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .order('published_at', { ascending: false })
     .limit(3);
 
-  const category = post.category as any;
-  const readTime = estimateReadTime(post.content);
+  const category = post.category;
+  const readTime = post.reading_minutes ?? 1;
   const safeContent = sanitizeArticleHtml(post.content);
   const safeJsonLd = (value: unknown) => JSON.stringify(value).replaceAll('<', String.fromCharCode(92) + 'u003c');
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';

@@ -36,9 +36,10 @@ function estimateReadTime(text: string): number {
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; q?: string; page?: string }>;
 }) {
-  const { category, q } = await searchParams;
+  const { category, q, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number.parseInt(pageParam ?? '1', 10) || 1);
   const supabase = await createClient();
 
   // Fetch categories
@@ -52,7 +53,7 @@ export default async function BlogPage({
   let query = supabase
     .from('blog_posts')
     .select(`
-      id, title, slug, excerpt, og_image_url, published_at, view_count,
+      id, title, slug, excerpt, og_image_url, published_at, view_count, reading_minutes,
       author_id,
       category:blog_categories(id, name, slug, color)
     `)
@@ -65,11 +66,15 @@ export default async function BlogPage({
   }
 
   if (q) {
-    query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`);
+    const escapedQuery = q.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_').replaceAll(',', '\\,');
+    query = query.or(`title.ilike.%${escapedQuery}%,excerpt.ilike.%${escapedQuery}%`);
   }
 
-  const { data: rawPosts } = await query.limit(24);
-  const authorIds = [...new Set((rawPosts ?? []).map((post) => post.author_id))];
+  const pageSize = 12;
+  const { data: fetchedPosts } = await query.range((page - 1) * pageSize, page * pageSize);
+  const hasNextPage = (fetchedPosts?.length ?? 0) > pageSize;
+  const rawPosts = (fetchedPosts ?? []).slice(0, pageSize);
+  const authorIds = [...new Set(rawPosts.map((post) => post.author_id))];
   const { data: authors } = authorIds.length
     ? await supabase
         .from('public_profiles')
@@ -242,7 +247,7 @@ export default async function BlogPage({
                           </div>
                           <div className="flex items-center gap-1 text-xs text-slate-400 font-bold">
                             <Clock className="h-3.5 w-3.5" />
-                            {estimateReadTime(featuredPost.excerpt)} mnt baca
+                            {featuredPost.reading_minutes ?? estimateReadTime(featuredPost.excerpt)} mnt baca
                           </div>
                         </div>
                       </CardContent>
@@ -296,7 +301,7 @@ export default async function BlogPage({
                           </div>
                           <div className="flex items-center gap-1 text-xs text-slate-400 font-bold">
                             <Clock className="h-3 w-3" />
-                            {estimateReadTime(post.excerpt)} mnt
+                            {post.reading_minutes ?? estimateReadTime(post.excerpt)} mnt
                           </div>
                         </div>
                       </CardContent>
@@ -304,6 +309,28 @@ export default async function BlogPage({
                   </Link>
                 ))}
               </div>
+
+              {(page > 1 || hasNextPage) && (
+                <nav className="flex items-center justify-center gap-3 mt-10" aria-label="Pagination blog">
+                  {page > 1 && (
+                    <Link
+                      href={`/blog?${new URLSearchParams({ ...(category ? { category } : {}), ...(q ? { q } : {}), page: String(page - 1) })}`}
+                      className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-bold text-sm hover:border-primary hover:text-primary"
+                    >
+                      Sebelumnya
+                    </Link>
+                  )}
+                  <span className="text-sm font-bold text-slate-500">Halaman {page}</span>
+                  {hasNextPage && (
+                    <Link
+                      href={`/blog?${new URLSearchParams({ ...(category ? { category } : {}), ...(q ? { q } : {}), page: String(page + 1) })}`}
+                      className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-bold text-sm hover:border-primary hover:text-primary"
+                    >
+                      Berikutnya
+                    </Link>
+                  )}
+                </nav>
+              )}
             </>
           )}
 

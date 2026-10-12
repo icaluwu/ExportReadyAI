@@ -5,7 +5,7 @@ import { ThemeToggle } from './ThemeToggle';
 
 export function Navbar() {
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md shadow-sm">
+    <nav className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl shadow-[0_12px_30px_-24px_rgba(15,23,42,0.45)]">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative overflow-hidden rounded-lg shadow-md shadow-primary/10 transition-transform group-hover:scale-105 duration-300 bg-white">
@@ -26,7 +26,7 @@ export function Navbar() {
             <span>Blog</span>
             <span className="absolute -top-2 -right-5 text-[9px] font-black bg-emerald-500 text-white px-1.5 py-0.5 rounded-full leading-none group-hover:bg-primary transition-colors">Community</span>
           </Link>
-          <Link href="/#pricing" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Harga</Link>
+          <Link href="/harga" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Harga</Link>
           <Link href="/#features" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Fitur</Link>
           <Link href="/#how-it-works" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Cara Kerja</Link>
           <Link href="/materi-belajar" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all hover:translate-y-[-1px]">Materi</Link>

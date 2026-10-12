@@ -390,7 +390,7 @@ export default function DashboardPage() {
               desc="Bicara dengan ahli ekspor kami" 
               icon={<Zap className="h-5 w-5 text-primary" />} 
               delay={0.4}
-              onClick={() => window.open('https://icaluwu.space/', '_blank')}
+              onClick={() => router.push('/harga')}
             />
             <Link href="/materi-belajar" className="block">
               <QuickLink 

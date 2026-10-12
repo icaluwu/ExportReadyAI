@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { model } from '@/lib/gemini';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 import { checkBotId } from 'botid/server';
+import { aiClient, aiModel } from '@/lib/ai-client';
 
 const HsCodeSchema = z.object({
   productName: z.string().trim().min(1).max(200),
@@ -56,8 +56,12 @@ Jawab HANYA dalam format JSON berikut tanpa teks lain:
   "note": "1 kalimat pengingat bahwa kode final harus diverifikasi dengan BTKI/bea cukai"
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const completion = await aiClient.chat.completions.create({
+      model: aiModel,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = completion.choices?.[0]?.message?.content || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
 

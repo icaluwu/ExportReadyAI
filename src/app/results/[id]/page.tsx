@@ -467,7 +467,7 @@ export default function ResultsPage() {
           <Button 
              size="lg" 
              className="bg-primary text-white hover:bg-white hover:text-slate-900 h-24 px-16 font-black text-3xl rounded-[2.5rem] shadow-2xl shadow-primary/40 transition-all hover:scale-105 group"
-             onClick={() => window.open('https://icaluwu.space/', '_blank')}
+             onClick={() => window.location.assign('/harga')}
           >
             Konsultasi Gratis <ArrowRight className="ml-4 h-8 w-8 group-hover:translate-x-2 transition-transform" />
           </Button>

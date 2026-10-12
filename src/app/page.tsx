@@ -75,7 +75,7 @@ export default function LandingPage() {
   const faqs = [
     {
       q: "Apakah ExportReady AI benar-benar gratis?",
-      a: "Ya. Assessment kesiapan ekspor, skor 0-100, rekomendasi negara tujuan, dan roadmap 4 fase semuanya gratis. Anda bahkan tidak wajib membuat akun untuk mencoba.",
+      a: "Assessment dan skor 0-100 gratis tanpa batas, termasuk analisis gap, satu rekomendasi negara tujuan, dan roadmap fase 1-2. Dua rekomendasi negara lainnya, roadmap fase 3-4, export PDF, dan chat tanpa batas tersedia di paket Premium.",
     },
     {
       q: "Berapa lama proses assessment-nya?",
@@ -109,26 +109,24 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[radial-gradient(1200px_500px_at_50%_-20%,rgba(27,58,107,0.12),transparent)] dark:bg-[radial-gradient(1200px_500px_at_50%_-20%,rgba(96,140,214,0.15),transparent)]" />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="max-w-4xl mx-auto"
+            className="max-w-3xl lg:text-left"
           >
             <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-xs font-black tracking-widest text-primary uppercase bg-card/70 border border-border/50 rounded-full shadow-sm">
               <Zap className="h-3.5 w-3.5" /> Konsultan Ekspor Virtual 24/7
             </span>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-5 leading-[1.15]">
-              Bantu UMKM Anda Siap Ekspor{" "}
-              <span className="text-gradient">Kurang dari 30 Menit</span>
+            <h1 className="text-4xl md:text-6xl font-black tracking-[-0.04em] text-foreground mb-5 leading-[1.08]">
+              Dari produk lokal{" "}
+              <span className="text-gradient">menuju pasar global</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto font-medium">
-              Dapatkan <span className="font-black text-foreground">skor kesiapan</span>,{" "}
-              <span className="font-black text-foreground">3 negara tujuan</span>, dan{" "}
-              <span className="font-black text-foreground">roadmap 4 fase</span>—gratis, kapan pun Anda butuh.
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl font-medium">
+              Ukur kesiapan ekspor Anda, pahami gap paling penting, lalu ikuti roadmap yang jelas — dalam bahasa Indonesia dan dimulai gratis.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center lg:justify-start gap-4">
               <Link 
                 href="/assessment" 
                 className={buttonVariants({ size: "lg", className: "h-14 px-10 text-lg font-black shadow-lg shadow-primary/15 bg-primary hover:bg-primary/95" })}
@@ -143,12 +141,56 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-muted-foreground">
-              <span className="rounded-full border border-border bg-card/60 px-3 py-1">Gratis</span>
+            <div className="mt-10 flex flex-wrap items-center lg:justify-start gap-3 text-xs font-bold text-muted-foreground">
+              <span className="rounded-full border border-border bg-card/60 px-3 py-1">Mulai gratis</span>
               <span className="rounded-full border border-border bg-card/60 px-3 py-1">Bahasa Indonesia</span>
               <span className="rounded-full border border-border bg-card/60 px-3 py-1">Cocok UMKM 1–5 orang</span>
               <span className="rounded-full border border-border bg-card/60 px-3 py-1">Akses 24/7</span>
               <span className="rounded-full border border-border bg-card/60 px-3 py-1">Tanpa kartu kredit</span>
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
+            className="relative"
+          >
+            <div className="absolute -inset-6 rounded-[2.5rem] bg-primary/10 blur-3xl" />
+            <div className="relative rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-[0_30px_80px_-35px_rgba(15,23,42,0.5)] backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-border/70 pb-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Preview hasil</p>
+                  <p className="mt-1 text-sm font-black text-foreground">Export Readiness Snapshot</p>
+                </div>
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400">LIVE</span>
+              </div>
+              <div className="grid grid-cols-[auto_1fr] items-center gap-5 py-6">
+                <div className="flex h-28 w-28 items-center justify-center rounded-full border-[10px] border-primary/15 border-t-primary border-r-primary">
+                  <div className="text-center">
+                    <div className="text-4xl font-black leading-none text-foreground">72</div>
+                    <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">skor</div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    ["Kesiapan legalitas", "Siap", "bg-emerald-500"],
+                    ["Target pasar", "Perlu riset", "bg-amber-500"],
+                    ["Dokumen ekspor", "Prioritas", "bg-sky-500"],
+                  ].map(([label, status, color]) => (
+                    <div key={label} className="flex items-center justify-between gap-3 text-xs">
+                      <span className="font-bold text-muted-foreground">{label}</span>
+                      <span className="flex items-center gap-1.5 font-black text-foreground"><span className={`h-1.5 w-1.5 rounded-full ${color}`} />{status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-muted/70 p-4">
+                <div className="mb-2 flex items-center justify-between text-xs font-black">
+                  <span className="text-foreground">Langkah berikutnya</span>
+                  <span className="text-primary">01 / 04</span>
+                </div>
+                <p className="text-sm font-medium leading-relaxed text-muted-foreground">Validasi dokumen dasar sebelum memilih negara tujuan pertama.</p>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -159,9 +201,9 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { label: "UMKM Indonesia", value: "64.2 Juta", sub: "Potensi pasar besar" },
-              { label: "Kontribusi Ekspor", value: "Hanya 15%", sub: "Peluang pertumbuhan" },
-              { label: "Analisis Terstruktur", value: "4 Fase", sub: "Roadmap siap ditindaklanjuti" }
+              { label: "Analisis terstruktur", value: "0–100", sub: "Skor kesiapan ekspor" },
+              { label: "Roadmap", value: "4 Fase", sub: "Langkah yang bisa ditindaklanjuti" },
+              { label: "Aksi terarah", value: "4 Fase", sub: "Roadmap siap ditindaklanjuti" }
             ].map((stat, i) => (
               <motion.div 
                 key={i}

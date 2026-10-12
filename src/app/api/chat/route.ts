@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { genAI } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase-server';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 import { checkBotId } from 'botid/server';
+import { aiClient, aiModel } from '@/lib/ai-client';
 
 // Rate limit: 10 chat messages per minute per client
 const rateLimit = createRateLimiter({ endpoint: 'chat', maxRequests: 10, windowMs: 60_000 });
@@ -87,30 +87,28 @@ Aturan:
 - Jawab ringkas (maksimal ~250 kata) kecuali diminta detail.
 ${assessmentContext}`;
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
-      systemInstruction,
-    });
-
     // Keep history limited to last 20 turns
     const history = messages.slice(-21, -1).map((m) => ({
-      role: m.role === 'user' ? ('user' as const) : ('model' as const),
-      parts: [{ text: m.content }],
+      role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
+      content: m.content,
     }));
-    // Gemini requires history to start with a user turn
-    while (history.length > 0 && history[0].role !== 'user') {
-      history.shift();
-    }
 
-    const chat = model.startChat({ history });
-    const result = await chat.sendMessageStream(lastMessage.content);
+    const completion = await aiClient.chat.completions.create({
+      model: aiModel,
+      messages: [
+        { role: 'system', content: systemInstruction },
+        ...history,
+        { role: 'user', content: lastMessage.content },
+      ],
+      stream: true,
+    });
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of result.stream) {
-            const text = chunk.text();
+          for await (const chunk of completion) {
+            const text = chunk.choices?.[0]?.delta?.content || '';
             if (text) controller.enqueue(encoder.encode(text));
           }
           controller.close();
